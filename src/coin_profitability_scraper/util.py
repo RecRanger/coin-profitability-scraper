@@ -8,6 +8,8 @@ import polars as pl
 
 def write_tables(df: pl.DataFrame, file_stem: str, output_folder: Path) -> None:
     """Write the DataFrame to CSV and Parquet files."""
+    output_folder.mkdir(parents=True, exist_ok=True)
+
     df.write_csv(output_folder / f"{file_stem}.csv")
     df.write_parquet(output_folder / f"{file_stem}.parquet")
 

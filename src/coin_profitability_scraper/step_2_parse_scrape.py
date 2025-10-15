@@ -12,7 +12,7 @@ from tqdm import tqdm
 from coin_profitability_scraper.step_1_scrape import step_1_html_folder_path
 from coin_profitability_scraper.util import get_datetime_str, write_tables
 
-step_2_output_folder = Path("./out/parsed_summary/")
+step_2_output_folder = Path("./out/step_2_coins_list/")
 
 
 def _get_hash_algo_from_html(soup: BeautifulSoup) -> str | None:
@@ -37,7 +37,7 @@ def _get_hash_algo_from_html(soup: BeautifulSoup) -> str | None:
         # Handle any exceptions (e.g., file not found, parsing errors)
         logger.error(f"Error parsing: {e}")
 
-    # Return None if the value is not found or an error occurs
+    # Return None if the value is not found or an error occurs.
     return None
 
 
@@ -95,7 +95,7 @@ def load_coin_list_df() -> pl.DataFrame:
         data.append(
             {
                 "filename": html_file_path.name,
-                "file_stem": html_file_path.stem,
+                "coin": html_file_path.stem,
                 "hash_algo": hash_algo,
                 "market_cap": market_cap,
                 "earliest_year": _get_earliest_year_from_html(html_content),
@@ -105,12 +105,7 @@ def load_coin_list_df() -> pl.DataFrame:
     df = pl.DataFrame(data)
 
     df = df.with_columns(
-        coin=pl.col("filename").str.replace(".html", ""),
-    )
-    df = df.with_columns(
-        url=pl.col("coin").map_elements(
-            lambda x: f"https://cryptoslate.com/coins/{x}/"
-        ),
+        url=pl.format("https://cryptoslate.com/coins/{}/", pl.col("coin")),
     )
     df = df.sort("market_cap", descending=True, nulls_last=True)
     logger.info(f"Coin List: {df}")
