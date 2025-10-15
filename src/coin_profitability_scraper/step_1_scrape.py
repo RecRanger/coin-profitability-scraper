@@ -15,7 +15,7 @@ from loguru import logger
 
 ua = UserAgent()
 
-html_folder_path = Path("./out/downloaded_pages/")
+step_1_html_folder_path = Path("./out/downloaded_pages/")
 start_timestamp = datetime.now(UTC)
 
 
@@ -48,7 +48,7 @@ def extract_next_button_urls(html_content: str | bytes) -> list[str]:
 def main() -> None:
     """Scrape coin pages."""
     # Create a folder to store downloaded pages.
-    html_folder_path.mkdir(parents=True, exist_ok=True)
+    step_1_html_folder_path.mkdir(parents=True, exist_ok=True)
 
     top_level_urls_queue: ScrapeQueue[str] = ScrapeQueue(
         [
@@ -98,7 +98,7 @@ def main() -> None:
 
             page_content = download_as_bytes(coin_url)
 
-            (html_folder_path / (coin_url.split("/")[-2] + ".html")).write_bytes(
+            (step_1_html_folder_path / (coin_url.split("/")[-2] + ".html")).write_bytes(
                 page_content,
             )
             # TODO: write the scrape date as a comment to the file for retrieval later
