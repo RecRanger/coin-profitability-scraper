@@ -4,7 +4,7 @@ from datetime import date
 
 from bs4 import BeautifulSoup
 
-from coin_profitability_scraper.step_2_parse_scrape import (
+from coin_profitability_scraper.crypto_slate.step_2_parse_scrape import (
     _extract_technical_key_value_from_soup,  # pyright: ignore[reportPrivateUsage]
     _get_earliest_logo_date_from_soup,  # pyright: ignore[reportPrivateUsage]
 )

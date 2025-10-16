@@ -1,6 +1,6 @@
 """Unit tests for the step_1_scrape module."""
 
-from coin_profitability_scraper.step_1_scrape import is_direct_coin_url
+from coin_profitability_scraper.crypto_slate.step_1_scrape import is_direct_coin_url
 
 
 def test_is_direct_coin_url() -> None:

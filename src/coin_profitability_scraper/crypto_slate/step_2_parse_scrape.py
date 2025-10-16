@@ -10,7 +10,9 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from tqdm import tqdm
 
-from coin_profitability_scraper.step_1_scrape import step_1_html_folder_path
+from coin_profitability_scraper.crypto_slate.step_1_scrape import (
+    step_1_html_folder_path,
+)
 from coin_profitability_scraper.util import get_datetime_str, write_tables
 
 step_2_output_folder = Path("./out/step_2_coins_list/")

@@ -6,7 +6,7 @@ from pathlib import Path
 import polars as pl
 from loguru import logger
 
-from coin_profitability_scraper.step_2_parse_scrape import (
+from coin_profitability_scraper.crypto_slate.step_2_parse_scrape import (
     step_2_output_folder,
 )
 from coin_profitability_scraper.util import get_datetime_str, write_tables
