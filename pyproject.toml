@@ -9,6 +9,7 @@ dependencies = [
     "beautifulsoup4>=4.14.2",
     "fake-useragent>=2.2.0",
     "loguru>=0.7.3",
+    "orjson>=3.11.3",
     "polars==1.31.0",
     "requests>=2.32.5",
     "tqdm>=4.67.1",
