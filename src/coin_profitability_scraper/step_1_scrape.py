@@ -50,7 +50,7 @@ def is_direct_coin_url(url: str) -> bool:
     if url.endswith(("/amp", "/amp/")):
         return False  # Exclude AMP pages.
 
-    return bool(re.match(r"^https://cryptoslate\.com/coins/[^/]+/?$", url))
+    return bool(re.match(r"^https://cryptoslate\.com/coins/[^/?=]+/?$", url))
 
 
 def main() -> None:
@@ -105,6 +105,11 @@ def main() -> None:
                 )
 
             page_content = download_as_bytes(coin_url)
+
+            if b"name-logo" not in page_content:
+                # Validate that this is a coin page with all the normal elements.
+                logger.warning(f'URL "{coin_url}" does not appear to be a coin page.')
+                continue
 
             (step_1_html_folder_path / (coin_url.split("/")[-2] + ".html")).write_bytes(
                 page_content,
