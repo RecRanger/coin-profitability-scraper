@@ -34,3 +34,9 @@ ignore = [
     "TD",
     "FIX"
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101", # Assert
+    "E501", # Long lines.
+]

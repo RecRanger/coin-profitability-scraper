@@ -19,7 +19,7 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
     df_algos = df_coins.group_by("hash_algo", maintain_order=True).agg(
         market_cap=pl.sum("market_cap"),
         coin_count=pl.len(),
-        coin_list=pl.col("coin"),
+        coin_list=pl.col("coin_name"),
         earliest_year=pl.min("earliest_year"),
     )
     df_algos = (
