@@ -3,21 +3,18 @@
 from pathlib import Path
 
 import polars as pl
-import requests
 from bs4 import BeautifulSoup
 from loguru import logger
 
-from coin_profitability_scraper.util import write_tables
+from coin_profitability_scraper.util import download_as_bytes, write_tables
 
-output_folder_path = Path("./out/minerstat")
+output_folder_path = Path("./out/minerstat/step_1_algo_list/")
 
 
 def _fetch_minerstat_page() -> bytes:
     """Fetch the HTML content of the Minerstat algorithms page."""
     url = "https://minerstat.com/algorithms"
-    response = requests.get(url, timeout=60)
-    response.raise_for_status()
-    return response.content
+    return download_as_bytes(url)
 
 
 def load_minerstat_table_from_html(
@@ -27,9 +24,9 @@ def load_minerstat_table_from_html(
 
     Has a unit test.
     """
-    soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(html_content.decode(), "html.parser")
 
-    # Find the table container
+    # Find the table container.
     table = soup.find("div", class_="box_table")
     if not table:
         msg = "Could not find the table in the provided HTML content."
@@ -59,6 +56,8 @@ def load_minerstat_table_from_html(
                 if a_tag:
                     algo_link_element = a_tag["href"]
                     if algo_link_element:
+                        assert isinstance(algo_link_element, str)
+                        assert algo_link_element.startswith("/algorithm/")
                         algo_link = f"https://minerstat.com{algo_link_element}"
 
             # If the column has tags (like <a> or <div> with class "tag"),
@@ -71,14 +70,13 @@ def load_minerstat_table_from_html(
 
             row_data.append(cell_text)
 
-        # Add the link as the last column
-        row_data.append(algo_link)
+        row_data.append(algo_link)  # Add the link as the last column.
         data.append(row_data)
 
-    # Create a Polars DataFrame
+    # Create a Polars DataFrame.
     df = pl.DataFrame(data, schema=headers, orient="row")
 
-    # Sanity check
+    # Sanity check.
     if df.height != len(data):
         msg = "DataFrame height does not match the number of data rows extracted."
         raise RuntimeError(msg)

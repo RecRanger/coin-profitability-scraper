@@ -32,7 +32,8 @@ select = [
 ignore = [
     "COM812",
     "TD",
-    "FIX"
+    "FIX",
+    "S101", # Assert
 ]
 
 [tool.ruff.lint.per-file-ignores]

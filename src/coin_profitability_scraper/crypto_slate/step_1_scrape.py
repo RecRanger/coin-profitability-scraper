@@ -7,29 +7,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeVar
 
-import backoff
-import requests
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
 from loguru import logger
 
-ua = UserAgent()
+from coin_profitability_scraper.util import download_as_bytes
 
 step_1_html_folder_path = Path("./out/downloaded_pages/")
 start_timestamp = datetime.now(UTC)
-
-
-@backoff.on_exception(
-    backoff.expo,
-    requests.exceptions.RequestException,
-    max_time=60,
-    max_tries=10,
-    on_backoff=lambda x: logger.warning(f"Retrying download: {x}"),
-)
-def download_as_bytes(url: str) -> bytes:
-    """Download the given URL and return the content as bytes."""
-    response = requests.get(url, headers={"User-Agent": ua.random}, timeout=120)
-    return response.content
 
 
 def extract_next_button_urls(html_content: str | bytes) -> list[str]:
