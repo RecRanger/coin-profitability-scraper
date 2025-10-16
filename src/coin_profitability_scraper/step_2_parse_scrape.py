@@ -34,20 +34,37 @@ def _extract_technical_key_value_from_soup(
             continue  # Skip hidden elements.
 
         key_element = li_element.find("span", class_="info")
-        value_element = li_element.find("span", class_="value")
-
-        if key_element is None or value_element is None:
+        if key_element is None:
             msg = (
-                f"Could not find key and/or value in technical info section. "
+                f"Could not find key in technical info section. "
                 f"Coin: {coin_slug}, li: {li_element}"
             )
             raise ValueError(msg)
 
-        if key_element.text in out:
-            msg = f"Repeated technical info key in coin {coin_slug}: {key_element.text}"
-            raise ValueError(msg)
+        if a_tags := li_element.find_all("a"):
+            # Special case: if there are links, join their text with commas.
+            value_str = ", ".join(a.text.strip() for a in a_tags if a.text.strip())
 
-        out[key_element.text] = re.sub(r"\s+", " ", value_element.text.strip())
+        else:
+            value_element = li_element.find("span", class_="value")
+
+            if value_element is None:
+                msg = (
+                    f"Could not find key and/or value in technical info section. "
+                    f"Coin: {coin_slug}, li: {li_element}"
+                )
+                raise ValueError(msg)
+
+            if key_element.text in out:
+                msg = (
+                    f"Repeated technical info key in coin {coin_slug}: "
+                    f"{key_element.text}"
+                )
+                raise ValueError(msg)
+
+            value_str = re.sub(r"\s+", " ", value_element.text.strip())
+
+        out[key_element.text] = value_str
     return out
 
 
