@@ -12,7 +12,7 @@ from loguru import logger
 
 from coin_profitability_scraper.util import download_as_bytes
 
-step_1_html_folder_path = Path("./out/downloaded_pages/")
+step_1_html_folder_path = Path("./out/crypto_slate/downloaded_pages/")
 start_timestamp = datetime.now(UTC)
 
 

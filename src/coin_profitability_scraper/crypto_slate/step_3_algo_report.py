@@ -11,7 +11,7 @@ from coin_profitability_scraper.crypto_slate.step_2_parse_scrape import (
 )
 from coin_profitability_scraper.util import get_datetime_str, write_tables
 
-step_3_output_folder = Path("./out/step_3_algo_report/")
+step_3_output_folder = Path("./out/crypto_slate/step_3_algo_report/")
 
 
 def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:

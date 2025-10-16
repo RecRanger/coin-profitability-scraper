@@ -15,7 +15,7 @@ from coin_profitability_scraper.crypto_slate.step_1_scrape import (
 )
 from coin_profitability_scraper.util import get_datetime_str, write_tables
 
-step_2_output_folder = Path("./out/step_2_coins_list/")
+step_2_output_folder = Path("./out/crypto_slate/step_2_coins_list/")
 
 
 def _extract_technical_key_value_from_soup(

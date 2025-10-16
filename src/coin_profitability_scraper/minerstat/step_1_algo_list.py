@@ -8,7 +8,7 @@ from loguru import logger
 
 from coin_profitability_scraper.util import download_as_bytes, write_tables
 
-output_folder_path = Path("./out/minerstat/step_1_algo_list/")
+step_1_output_folder_path = Path("./out/minerstat/step_1_algo_list/")
 
 
 def _fetch_minerstat_page() -> bytes:
@@ -90,20 +90,44 @@ def transform_add_extra_columns(df: pl.DataFrame) -> pl.DataFrame:
         hardware_asic=pl.col("Hardware").str.contains("ASIC"),
         hardware_amd=pl.col("Hardware").str.contains("AMD"),
         hardware_nvidia=pl.col("Hardware").str.contains("NVIDIA"),
+        algo_slug=pl.col("url").str.split("/").list.get(-1),
     )
     return df  # noqa: RET504
 
 
 def main() -> None:
     """Fetch and process Minerstat algorithm data."""
-    output_folder_path.mkdir(parents=True, exist_ok=True)
+    step_1_output_folder_path.mkdir(parents=True, exist_ok=True)
+
+    html_content_path = step_1_output_folder_path / "minerstat_algorithms.html"
 
     html_content = _fetch_minerstat_page()
-    logger.info("Fetched Minerstat page content.")
+    logger.info(f"Fetched Minerstat page content: {len(html_content):,} bytes.")
 
-    # Store the raw HTML content.
-    output_folder_path.mkdir(parents=True, exist_ok=True)
-    (output_folder_path / "minerstat_algorithms.html").write_bytes(html_content)
+    if len(html_content) < 50_000:  # noqa: PLR2004
+        if html_content_path.exists():
+            logger.warning(
+                f"Downloaded content is unexpectedly small ({len(html_content)}). "
+                f"Using previously saved content of size "
+                f"{html_content_path.stat().st_size} bytes."
+            )
+            html_content = html_content_path.read_bytes()
+        else:
+            msg = (
+                f"Downloaded content is unexpectedly small ({len(html_content)}), "
+                "and no previous content exists to fall back on."
+            )
+            raise RuntimeError(msg)
+    else:
+        # Store the raw HTML content.
+        (step_1_output_folder_path / "minerstat_algorithms.html").write_bytes(
+            html_content
+        )
+        logger.info("Saved Minerstat HTML content.")
+
+    assert len(html_content) > 50_000, (  # noqa: PLR2004
+        f"Downloaded content is unexpectedly small ({len(html_content)})"
+    )
 
     # Process the HTML content as needed.
     df = load_minerstat_table_from_html(html_content)
@@ -111,7 +135,7 @@ def main() -> None:
 
     df = transform_add_extra_columns(df)
 
-    write_tables(df, "minerstat_algorithms", output_folder_path)
+    write_tables(df, "minerstat_algorithms", step_1_output_folder_path)
 
     logger.info("Minerstat data processing complete.")
 
