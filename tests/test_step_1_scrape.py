@@ -19,4 +19,9 @@ def test_is_direct_coin_url() -> None:
 
     # Specific examples to avoid.
     assert is_direct_coin_url("https://cryptoslate.com/coins/page/14/") is False
-    # TODO: Add amp pages here.
+
+    # Amp pages must be excluded.
+    assert is_direct_coin_url("https://cryptoslate.com/coins/amp") is False
+    assert is_direct_coin_url("https://cryptoslate.com/coins/amp/") is False
+    assert is_direct_coin_url("https://cryptoslate.com/coins/bitcoin/amp") is False
+    assert is_direct_coin_url("https://cryptoslate.com/coins/bitcoin/amp/") is False

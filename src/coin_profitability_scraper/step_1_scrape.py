@@ -47,6 +47,9 @@ def extract_next_button_urls(html_content: str | bytes) -> list[str]:
 
 def is_direct_coin_url(url: str) -> bool:
     """Check if the URL is a direct coin URL."""
+    if url.endswith(("/amp", "/amp/")):
+        return False  # Exclude AMP pages.
+
     return bool(re.match(r"^https://cryptoslate\.com/coins/[^/]+/?$", url))
 
 
