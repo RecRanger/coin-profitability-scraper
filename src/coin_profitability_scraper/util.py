@@ -37,4 +37,5 @@ def download_as_bytes(url: str) -> bytes:
         headers={"User-Agent": fake_useragent.UserAgent().random},
         timeout=120,
     )
+    response.raise_for_status()
     return response.content
