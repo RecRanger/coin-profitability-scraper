@@ -8,7 +8,7 @@ from loguru import logger
 
 from coin_profitability_scraper.util import download_as_bytes, write_tables
 
-step_1_output_folder_path = Path("./out/minerstat/step_1_algo_list/")
+step_1a_output_folder_path = Path("./out/minerstat/") / Path(__file__).stem
 
 
 def _fetch_minerstat_page() -> bytes:
@@ -97,9 +97,9 @@ def transform_add_extra_columns(df: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Fetch and process Minerstat algorithm data."""
-    step_1_output_folder_path.mkdir(parents=True, exist_ok=True)
+    step_1a_output_folder_path.mkdir(parents=True, exist_ok=True)
 
-    html_content_path = step_1_output_folder_path / "minerstat_algorithms.html"
+    html_content_path = step_1a_output_folder_path / "minerstat_algorithms.html"
 
     html_content = _fetch_minerstat_page()
     logger.info(f"Fetched Minerstat page content: {len(html_content):,} bytes.")
@@ -120,7 +120,7 @@ def main() -> None:
             raise RuntimeError(msg)
     else:
         # Store the raw HTML content.
-        (step_1_output_folder_path / "minerstat_algorithms.html").write_bytes(
+        (step_1a_output_folder_path / "minerstat_algorithms.html").write_bytes(
             html_content
         )
         logger.info("Saved Minerstat HTML content.")
@@ -135,7 +135,7 @@ def main() -> None:
 
     df = transform_add_extra_columns(df)
 
-    write_tables(df, "minerstat_algorithms", step_1_output_folder_path)
+    write_tables(df, "minerstat_algorithms", step_1a_output_folder_path)
 
     logger.info("Minerstat data processing complete.")
 

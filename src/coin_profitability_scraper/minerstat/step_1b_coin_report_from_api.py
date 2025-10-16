@@ -1,4 +1,4 @@
-"""Step 3: Generate a report summarizing the parsed coin data."""
+"""Step 1b."""
 
 import json
 from pathlib import Path
@@ -13,7 +13,7 @@ from coin_profitability_scraper.util import (
     write_tables,
 )
 
-output_folder = Path("./out/minerstat/algo_report_from_api/")
+step_1b_output_folder = Path("./out/minerstat/") / Path(__file__).stem
 
 
 def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
@@ -70,17 +70,17 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Generate a report summarizing the parsed coin data."""
-    output_folder.mkdir(parents=True, exist_ok=True)
+    step_1b_output_folder.mkdir(parents=True, exist_ok=True)
 
     data = download_as_bytes("https://api.minerstat.com/v2/coins")
     logger.info(f"Downloaded {len(data):,} bytes of coin data from Minerstat API.")
     assert len(data) > 1_000  # noqa: PLR2004
 
-    (output_folder / "minerstat_coins.json").write_bytes(data)
+    (step_1b_output_folder / "minerstat_coins.json").write_bytes(data)
     logger.info("Wrote raw Minerstat coin data to JSON file.")
 
     data_list = orjson.loads(data)
-    (output_folder / "minerstat_coins.pretty.json").write_bytes(
+    (step_1b_output_folder / "minerstat_coins.pretty.json").write_bytes(
         orjson.dumps(orjson.loads(data), option=orjson.OPT_INDENT_2)
     )
     logger.info(f"Parsed {len(data_list)} coins from Minerstat API.")
@@ -92,7 +92,7 @@ def main() -> None:
     write_tables(
         df_algos,
         f"coin_algos_{get_datetime_str()}_{len(df_algos)}algos",
-        output_folder,
+        step_1b_output_folder,
     )
     logger.info("Wrote coin algos table.")
 

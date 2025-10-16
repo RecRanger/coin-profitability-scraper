@@ -1,6 +1,6 @@
 """Tests for load_minerstat_data.py."""
 
-from coin_profitability_scraper.minerstat.step_1_algo_list import (
+from coin_profitability_scraper.minerstat.step_1a_algo_list import (
     load_minerstat_table_from_html,
 )
 
