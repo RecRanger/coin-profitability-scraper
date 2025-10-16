@@ -16,30 +16,39 @@ from coin_profitability_scraper.util import get_datetime_str, write_tables
 step_2_output_folder = Path("./out/step_2_coins_list/")
 
 
-def _get_hash_algo_from_html(soup: BeautifulSoup) -> str | None:
-    """Extract the hash algorithm from the HTML soup."""
-    try:
-        # Find the span with class="info" containing "Hash Algorithm"
-        info_span = soup.find(
-            "span",
-            class_="info",
-            string="Hash Algorithm",  # pyright: ignore[reportArgumentType]
-        )
+def _extract_technical_key_value_from_soup(
+    soup: BeautifulSoup, *, coin_slug: str
+) -> dict[str, str | None]:
+    """Extract the hash algorithm from the HTML soup.
 
-        # If the span is found, get the next sibling span with class="value"
-        if info_span:
-            value_span = info_span.find_next("span", class_="value")
+    Most importantly, returns the Hash Algorithm.
+    """
+    technical_info_key_value_section = soup.find("div", class_="technical")
+    if technical_info_key_value_section is None:
+        msg = f"Could not find technical info section. Coin: {coin_slug}"
+        raise ValueError(msg)
 
-            # If the value span is found, return its text content
-            if value_span:
-                return value_span.text.strip()
+    out: dict[str, str | None] = {}
+    for li_element in technical_info_key_value_section.find_all("li"):
+        if "hidden" in li_element.attrs.get("class", []):
+            continue  # Skip hidden elements.
 
-    except Exception as e:  # noqa: BLE001
-        # Handle any exceptions (e.g., file not found, parsing errors)
-        logger.error(f"Error parsing: {e}")
+        key_element = li_element.find("span", class_="info")
+        value_element = li_element.find("span", class_="value")
 
-    # Return None if the value is not found or an error occurs.
-    return None
+        if key_element is None or value_element is None:
+            msg = (
+                f"Could not find key and/or value in technical info section. "
+                f"Coin: {coin_slug}, li: {li_element}"
+            )
+            raise ValueError(msg)
+
+        if key_element.text in out:
+            msg = f"Repeated technical info key in coin {coin_slug}: {key_element.text}"
+            raise ValueError(msg)
+
+        out[key_element.text] = re.sub(r"\s+", " ", value_element.text.strip())
+    return out
 
 
 def _get_market_cap_from_html(soup: BeautifulSoup) -> float | None:
@@ -125,19 +134,29 @@ def _get_coin_name_from_soup(soup: BeautifulSoup) -> str | None:
     return None
 
 
+def clean_col_name(input_str: str) -> str:
+    """Clean a string to a clean column name."""
+    return re.sub(r"[^a-zA-Z]+", "_", input_str).strip("_").lower()
+
+
 def _load_file_fetch_data(html_file_path: Path) -> dict[str, date | str | float | None]:
     """Load and parse a single HTML file to extract coin information."""
     html_content = html_file_path.read_text()
     soup = BeautifulSoup(html_content, "html.parser")
 
-    hash_algo = _get_hash_algo_from_html(soup)
+    technical_kv_data = _extract_technical_key_value_from_soup(
+        soup, coin_slug=html_file_path.stem
+    )
+    technical_kv_data_cols = {
+        "tech_" + clean_col_name(k): v for k, v in technical_kv_data.items()
+    }
     market_cap = _get_market_cap_from_html(soup)
 
-    return {
+    main_data: dict[str, date | str | float | None] = {
         "filename": html_file_path.name,
         "coin_slug": html_file_path.stem,
         "coin_name": _get_coin_name_from_soup(soup),
-        "hash_algo": hash_algo,
+        "hash_algo": technical_kv_data.get("Hash Algorithm"),
         "market_cap": market_cap,
         "earliest_year_in_description": (
             _get_earliest_year_from_html_text_description(html_content)
@@ -147,6 +166,7 @@ def _load_file_fetch_data(html_file_path: Path) -> dict[str, date | str | float 
         ),
         "html_file_size_bytes": html_file_path.stat().st_size,
     }
+    return main_data | technical_kv_data_cols
 
 
 def load_coin_list_df() -> pl.DataFrame:
