@@ -45,6 +45,11 @@ def extract_next_button_urls(html_content: str | bytes) -> list[str]:
     return []
 
 
+def is_direct_coin_url(url: str) -> bool:
+    """Check if the URL is a direct coin URL."""
+    return bool(re.match(r"^https://cryptoslate\.com/coins/[^/]+/?$", url))
+
+
 def main() -> None:
     """Scrape coin pages."""
     # Create a folder to store downloaded pages.
@@ -63,12 +68,12 @@ def main() -> None:
 
         html_content = download_as_bytes(url)
 
-        # parse out the coins and add them to the queue_store
+        # Parse out the coins and add them to the queue_store.
         soup = BeautifulSoup(html_content, "html.parser")
         new_coin_urls: list[str] = [
             str(a["href"]).rstrip(".")
             for a in soup.find_all("a", href=True)
-            if str(a["href"]).startswith("https://cryptoslate.com/coins/")
+            if is_direct_coin_url(str(a["href"]))
         ]
         coin_urls_queue.extend(new_coin_urls)
 
@@ -77,11 +82,11 @@ def main() -> None:
 
         tl_completed_count = top_level_urls_queue.completed_count()
         logger.info(
-            f"Processed top-level URL #{tl_completed_count}: '{url}'. "
+            f'Processed top-level URL #{tl_completed_count}: "{url}". '
             f"Got {len(new_coin_urls)} coins and {len(next_button_urls)} next buttons."
         )
 
-        # scrape the coin pages
+        # Scrape the coin pages.
         while len(coin_urls_queue) > 0:
             coin_url = coin_urls_queue.pop()
 
@@ -92,7 +97,7 @@ def main() -> None:
                     / (datetime.now(UTC) - start_timestamp).total_seconds()
                 )
                 logger.info(
-                    f"Processing coin URL #{completed_count}: '{coin_url}'. "
+                    f'Processing coin URL #{completed_count}: "{coin_url}". '
                     f"{coins_per_second:.2f} coins per second."
                 )
 
