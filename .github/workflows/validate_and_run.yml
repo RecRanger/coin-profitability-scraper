@@ -173,3 +173,41 @@ jobs:
       - name: Run CryptoDelver data pipeline
         run: |
           uv run src/coin_profitability_scraper/cryptodelver/cryptodelver_pipeline.py
+
+
+  run-reports-pipeline-update:
+    runs-on: ubuntu-latest
+    needs:
+      - validate-job
+      - run-minerstat-update
+      - run-cryptodelver-update
+      - run-crypto51-update
+      - run-cryptoslate-update
+      - run-miningnow-update
+    # Hack: Allow this job to run even if other jobs fail, but still wait for them.
+    if: ${{ always() }}
+
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Install dolt
+        run: sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
+      
+      - name: Import Dolt credentials
+        run: |
+          echo "$DOLTHUB_LOGIN_JWT_CONTENTS" > dolt_jwt.json
+          dolt creds import dolt_jwt.json
+        env:
+          DOLTHUB_LOGIN_JWT_CONTENTS: ${{ secrets.DOLTHUB_LOGIN_JWT_CONTENTS }}
+
+      - name: Run Reports data pipeline
+        run: |
+          uv run src/coin_profitability_scraper/reports/reports_pipeline.py

@@ -9,7 +9,6 @@ from loguru import logger
 
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL
-from coin_profitability_scraper.tables import table_to_path_and_schema
 
 output_folder = Path("./out/reports/") / Path(__file__).stem
 
@@ -24,20 +23,37 @@ class DySchemaGoldAlgorithms(dy.Schema):
     source_tables_json = dy.String(nullable=False, min_length=1, max_length=100)
     coin_count = dy.UInt32(nullable=False)
 
-    earliest_coin_created_at = dy.Datetime(nullable=False)
-    latest_coin_created_at = dy.Datetime(nullable=False)
+    earliest_coin_created_at = dy.Date(nullable=False)
+    latest_coin_created_at = dy.Date(nullable=False)
 
     earliest_coin = dy.String(nullable=False, min_length=1, max_length=100)
     latest_coin = dy.String(nullable=False, min_length=1, max_length=100)
 
+    volume_24h_usd = dy.Float64(nullable=True)
+    market_cap_usd = dy.Float64(nullable=True)
+
+    asic_count = dy.UInt32(nullable=True)
+    earliest_asic_announcement_date = dy.Date(nullable=True)
+    earliest_asic_launch_date = dy.Date(nullable=True)
+    earliest_asic_created_at = dy.Date(nullable=True)
+    latest_asic_created_at = dy.Date(nullable=True)
+
 
 def _fetch_dolt_tables() -> None:
     """Fetch the existing tables in dolt."""
+    from coin_profitability_scraper.tables import (  # noqa: PLC0415
+        table_to_path_and_schema,
+    )
+
     output_folder.mkdir(parents=True, exist_ok=True)
     logger.info("Starting fetching dolt tables.")
 
     with DoltDatabaseUpdater(DOLT_REPO_URL) as dolt:
         for table_name in table_to_path_and_schema:
+            if table_name == "gold_algorithms":
+                continue
+
+            logger.debug(f"Loading {table_name}")
             df = pl.read_database(
                 f"SELECT * FROM {table_name}",  # noqa: S608
                 connection=dolt.engine,
@@ -122,6 +138,37 @@ def _get_stacked_coin_list() -> pl.DataFrame:
     return df
 
 
+def _get_stacked_asics_list() -> pl.DataFrame:
+    """Stack all asic datasets into a normalized asic list.
+
+    TODO: Could be moved to "silver_asics" table.
+    """
+    df = pl.concat(
+        [
+            pl.read_parquet(output_folder / "src_miningnow_asics.parquet").select(
+                source_site=pl.lit("crypto51"),
+                source_table=pl.lit("crypto51_asics"),
+                asic_name=pl.col("title"),
+                algo_name=pl.col("algo_title"),
+                hash_rate=pl.col("hash_rate"),
+                hash_rate_units=pl.col("hash_rate_type_title"),
+                cooling_type=pl.col("cooling"),
+                price_usd=pl.col("best_price_usd"),
+                power_watts=pl.col("power_watts"),
+                weight_kg=pl.col("weight_kg"),
+                annoucement_date=(
+                    pl.col("announcement_date").cast(pl.Datetime).dt.date()
+                ),
+                launch_date=(pl.col("launch_date").cast(pl.Datetime).dt.date()),
+                created_at=pl.col("created_at"),
+            ),
+        ]
+    )
+
+    logger.info(f"Stacked asic list with {df.height:,} entries.")
+    return df
+
+
 def _transform_coin_list_to_gold_algorithms(df_coin_list: pl.DataFrame) -> pl.DataFrame:
     """Transform coin list to algorithm list."""
     df = (
@@ -141,7 +188,10 @@ def _transform_coin_list_to_gold_algorithms(df_coin_list: pl.DataFrame) -> pl.Da
             latest_coin=(
                 (pl.col("coin_name") + pl.lit(" @ ") + pl.col("source_site")).last()
             ),
-            # TODO: Add a "has_asic" column.
+            # FIXME: These sum across ALL coin reports (including duplicate reports from
+            # different sources for the same coin). Good enough heuristic though.
+            market_cap_usd=pl.col("market_cap_usd").sum(),
+            volume_24h_usd=pl.col("volume_24h_usd").sum(),
         )
     )
 
@@ -162,6 +212,23 @@ def _transform_coin_list_to_gold_algorithms(df_coin_list: pl.DataFrame) -> pl.Da
     return df
 
 
+def _transform_asic_list_to_gold_algorithms(df_asic_list: pl.DataFrame) -> pl.DataFrame:
+    """Transform asic list to algorithm list."""
+    df = (
+        df_asic_list.filter(pl.col("algo_name").is_not_null())
+        .group_by(["algo_name"], maintain_order=True)
+        .agg(
+            asic_count=pl.col("asic_name").n_unique(),
+            earliest_asic_announcement_date=pl.col("annoucement_date").min(),
+            earliest_asic_launch_date=pl.col("launch_date").min(),
+            earliest_asic_created_at=pl.col("created_at").min(),
+            latest_asic_created_at=pl.col("created_at").max(),
+        )
+    )
+    logger.info(f"Transformed asic list to algorithm list with {df.height:,} entries.")
+    return df
+
+
 def main() -> None:
     """Summarize all algorithms."""
     _fetch_dolt_tables()
@@ -169,6 +236,21 @@ def main() -> None:
     df_coins_stacked = _get_stacked_coin_list()
 
     df_algorithms = _transform_coin_list_to_gold_algorithms(df_coins_stacked)
+
+    df_algorithms_from_ascis = _transform_asic_list_to_gold_algorithms(
+        _get_stacked_asics_list()
+    )
+
+    df_algorithms = df_algorithms.join(
+        df_algorithms_from_ascis,
+        on="algo_name",
+        validate="1:1",
+        how="left",  # Must have 1+ coins before we care about an ASIC.
+    )
+
+    # Cast all datetime cols to dates.
+    df_algorithms = df_algorithms.with_columns(pl.selectors.datetime().dt.date())
+
     df_algorithms = DySchemaGoldAlgorithms.validate(df_algorithms, cast=True)
 
     df_algorithms.write_parquet(output_folder / "gold_algorithms.parquet")

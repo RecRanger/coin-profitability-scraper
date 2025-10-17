@@ -26,6 +26,7 @@ from coin_profitability_scraper.miningnow import (
 from coin_profitability_scraper.miningnow import (
     step_2c_asic_list as miningnow_asics_module,
 )
+from coin_profitability_scraper.reports import gold_algorithms as gold_algorithms_module
 
 TableNameLiteral = Literal[
     "minerstat_coins",
@@ -35,6 +36,7 @@ TableNameLiteral = Literal[
     "miningnow_asics",
     "crypto51_coins",
     "cryptodelver_coins",
+    "gold_algorithms",
 ]
 
 table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] = {
@@ -65,5 +67,9 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "cryptodelver_coins": (
         cryptodelver_coins_module.output_parquet_path,
         cryptodelver_coins_module.DySchemaCryptodelverCoins,
+    ),
+    "gold_algorithms": (
+        gold_algorithms_module.output_folder / "gold_algorithms.parquet",
+        gold_algorithms_module.DySchemaGoldAlgorithms,
     ),
 }
