@@ -33,6 +33,11 @@ def upsert_polars_rows(
         query=f"SELECT * FROM {table_name}",  # noqa: S608
         connection=engine,
     )
+    # Cast so that join works, especially in case `df_current` is empty (brand new
+    # table).
+    df_current = df_current.cast(
+        {col: dtype for col, dtype in df.schema.items() if col in df_current}
+    )
     df_update = df.join(
         df_current,
         on=sorted(set(df.columns) & set(df_current.columns)),

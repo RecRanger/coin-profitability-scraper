@@ -4,7 +4,9 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Literal
 
+import dataframely as dy
 import polars as pl
 from bs4 import BeautifulSoup
 from loguru import logger
@@ -13,9 +15,40 @@ from tqdm import tqdm
 from coin_profitability_scraper.crypto_slate.step_1_scrape import (
     step_1_html_folder_path,
 )
-from coin_profitability_scraper.util import get_datetime_str, write_tables
+from coin_profitability_scraper.data_util import pl_df_all_common_str_cleaning
 
 step_2_output_folder = Path("./out/crypto_slate/step_2_coins_list/")
+
+_default_string_kwargs: dict[Literal["min_length", "max_length"], int] = {
+    "min_length": 1,
+    "max_length": 200,
+}
+
+
+class DySchemaCryptoslateCoins(dy.Schema):
+    """Schema for cryptoslate_coins table."""
+
+    coin_slug = dy.String(primary_key=True, nullable=False, **_default_string_kwargs)
+
+    # `coin_name` is not unique.
+    coin_name = dy.String(nullable=False, **_default_string_kwargs)
+    hash_algo = dy.String(nullable=True, **_default_string_kwargs)
+    market_cap_usd = dy.UInt64(nullable=True)
+    earliest_year_in_description = dy.UInt16(nullable=True)
+    earliest_logo_date = dy.Date(nullable=True)
+    html_file_size_bytes = dy.UInt32(nullable=False)
+    reported_blockchain = dy.String(nullable=True, **_default_string_kwargs)
+    reported_consensus = dy.String(nullable=True, **_default_string_kwargs)
+    reported_hash_algorithm = dy.String(nullable=True, **_default_string_kwargs)
+    reported_org_structure = dy.String(nullable=True, **_default_string_kwargs)
+    reported_development_status = dy.String(nullable=True, **_default_string_kwargs)
+    reported_open_source = dy.String(nullable=True, **_default_string_kwargs)
+    reported_hard_wallet_support = dy.String(nullable=True, **_default_string_kwargs)
+    reported_block_time = dy.String(nullable=True, **_default_string_kwargs)
+    reported_staking_apr = dy.String(nullable=True, **_default_string_kwargs)
+    reported_inflation = dy.String(nullable=True, **_default_string_kwargs)
+    url = dy.String(nullable=True, **_default_string_kwargs)
+    earliest_year = dy.UInt16(nullable=True)
 
 
 def _extract_technical_key_value_from_soup(
@@ -167,16 +200,15 @@ def _load_file_fetch_data(html_file_path: Path) -> dict[str, date | str | float 
         soup, coin_slug=html_file_path.stem
     )
     technical_kv_data_cols = {
-        "tech_" + clean_col_name(k): v for k, v in technical_kv_data.items()
+        "reported_" + clean_col_name(k): v for k, v in technical_kv_data.items()
     }
-    market_cap = _get_market_cap_from_html(soup)
+    market_cap_usd = _get_market_cap_from_html(soup)
 
     main_data: dict[str, date | str | float | None] = {
-        "filename": html_file_path.name,
         "coin_slug": html_file_path.stem,
         "coin_name": _get_coin_name_from_soup(soup),
         "hash_algo": technical_kv_data.get("Hash Algorithm"),
-        "market_cap": market_cap,
+        "market_cap_usd": market_cap_usd,
         "earliest_year_in_description": (
             _get_earliest_year_from_html_text_description(html_content)
         ),
@@ -207,13 +239,14 @@ def load_coin_list_df() -> pl.DataFrame:
     logger.debug(f"Raw coin data: {df.height:,} rows")
 
     df = df.with_columns(
+        pl.col("market_cap_usd").round().cast(pl.UInt64),  # Float to int.
         url=pl.format("https://cryptoslate.com/coins/{}/", pl.col("coin_slug")),
         earliest_year=pl.min_horizontal(
             pl.col("earliest_logo_date").cast(pl.Date).dt.year(),
             pl.col("earliest_year_in_description"),
         ),
     )
-    df = df.sort("market_cap", descending=True, nulls_last=True)
+    df = df.sort("market_cap_usd", descending=True, nulls_last=True)
     logger.info(f"Coin List: {df}")
 
     return df
@@ -226,19 +259,25 @@ def main() -> None:
 
     df = load_coin_list_df()
 
+    df = pl_df_all_common_str_cleaning(df)
+
+    # Add missing columns. Mostly a hack.
+    for col, dtype in DySchemaCryptoslateCoins.polars_schema().items():
+        if col not in df.columns:
+            df = df.with_columns(pl.lit(None, dtype=dtype).alias(col))
+
+    df = DySchemaCryptoslateCoins.validate(df, cast=True)
+
     logger.info(
         f"Total market cap of {len(df):,} coins here: "
-        f"US${df['market_cap'].sum() / 1_000_000_000_000:.3f}T"
+        f"US${df['market_cap_usd'].sum() / 1_000_000_000_000:.3f}T"
     )
 
-    write_tables(
-        df,
-        f"coin_list_{get_datetime_str()}_{len(df)}coins",
-        step_2_output_folder,
-    )
     logger.info("Wrote coin list table.")
-
     logger.info(f"Top 10 coins by market cap:\n{df.head(10)}")
+
+    step_2_output_folder.mkdir(parents=True, exist_ok=True)
+    df.write_parquet(step_2_output_folder / "cryptoslate_coins.parquet")
 
 
 if __name__ == "__main__":

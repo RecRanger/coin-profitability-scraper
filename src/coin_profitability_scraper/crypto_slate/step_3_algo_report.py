@@ -9,7 +9,6 @@ from loguru import logger
 from coin_profitability_scraper.crypto_slate.step_2_parse_scrape import (
     step_2_output_folder,
 )
-from coin_profitability_scraper.util import get_datetime_str, write_tables
 
 step_3_output_folder = Path("./out/crypto_slate/step_3_algo_report/")
 
@@ -69,10 +68,7 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Generate a report summarizing the parsed coin data."""
-    latest_source = sorted(step_2_output_folder.glob("coin_list_*.parquet"))[-1]
-    logger.info(f"Loading latest coin list from {latest_source.name}")
-
-    df_coins = pl.read_parquet(latest_source)
+    df_coins = pl.read_parquet(step_2_output_folder / "cryptoslate_coins.parquet")
 
     logger.info(
         f"Loaded {len(df_coins)} coins from {df_coins['filename'].min()} to "
@@ -81,13 +77,8 @@ def main() -> None:
 
     df_algos = summarize_by_algo(df_coins)
 
-    write_tables(
-        df_algos,
-        f"coin_algos_{get_datetime_str()}_{len(df_algos)}algos",
-        step_3_output_folder,
-    )
-    logger.info("Wrote coin algos table.")
-
+    df_algos.write_parquet(step_3_output_folder / "cryptoslate_algorithms.parquet")
+    step_3_output_folder.mkdir(parents=True, exist_ok=True)
     logger.info("Finished main()")
 
 

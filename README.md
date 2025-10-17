@@ -1,6 +1,8 @@
 # coin-profitability-scraper
 Tool for assessing profitability opportunities of obscure cryptocurrencies
 
+ETL pipelines in this repo update the Dolt repository at: https://www.dolthub.com/repositories/recranger/cryptocurrency-coin-algo-data
+
 ## Data Sources
 
 * Minerstat: https://minerstat.com/algorithms

@@ -3,11 +3,11 @@
 from typing import Any
 
 import sqlalchemy
+import sqlalchemy.dialects.mysql.base
+from loguru import logger
 
 from coin_profitability_scraper import PACKAGE_ROOT
-from coin_profitability_scraper.minerstat.step_3b_ingest_each_coin_page import (
-    DySchemaMinerstatCoins,
-)
+from coin_profitability_scraper.tables import table_to_path_and_schema
 
 schema_output_folder = PACKAGE_ROOT.parent.parent / "dolt_schema"
 
@@ -16,13 +16,10 @@ def main() -> None:
     """Generate SQL schemas."""
     assert schema_output_folder.is_dir()
 
-    for table_name, schema_class in (
-        {
-            "minerstat_coins": DySchemaMinerstatCoins,
-        }
-    ).items():
+    for table_name, (_path, schema_class) in table_to_path_and_schema.items():
+        logger.info(f"Generating SQL schema for {table_name}")
         sqlalchemy_columns: list[Any] = schema_class.sql_schema(  # pyright: ignore[reportUnknownVariableType,reportUnknownMemberType]
-            dialect=sqlalchemy.Dialect(),
+            dialect=sqlalchemy.dialects.mysql.base.MySQLDialect()
         )
 
         # Create a MetaData instance.
@@ -59,6 +56,8 @@ def main() -> None:
             )
         ).replace("\t", " " * 4)
         (schema_output_folder / f"{table_name}.sql").write_text(create_stmt)
+
+    logger.success("Done.")
 
 
 if __name__ == "__main__":
