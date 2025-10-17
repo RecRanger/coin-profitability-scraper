@@ -35,7 +35,8 @@ jobs:
 
   run-minerstat-update:
     runs-on: ubuntu-latest
-    depends-on: validate-job
+    needs: validate-job
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v5
@@ -46,18 +47,24 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-groups
 
+      - name: Install dolt
+        run: sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
+
+      - name: Import Dolt credentials
+        run: |
+          echo "$DOLTHUB_LOGIN_JWT_CONTENTS" > dolt_jwt.json
+          dolt creds import dolt_jwt.json
+        env:
+          DOLTHUB_LOGIN_JWT_CONTENTS: ${{ secrets.DOLTHUB_LOGIN_JWT_CONTENTS }}
+          
       - name: Run Minerstat data pipeline
         run: |
-          uv run src/coin_profitability_scraper/minerstat/step_1a_algo_list.py
-          uv run src/coin_profitability_scraper/minerstat/step_1b_coin_report_from_api.py
-          uv run src/coin_profitability_scraper/minerstat/step_2a_scrape_each_algo_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_2b_scrape_each_coin_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_3b_ingest_each_coin_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_9_dolt_write.py
+          uv run src/coin_profitability_scraper/minerstat/minerstat_pipeline.py
 
   run-crypto_slate-update:
     runs-on: ubuntu-latest
-    depends-on: validate-job
+    needs: validate-job
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v5
@@ -68,9 +75,16 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-groups
 
+      - name: Install dolt
+        run: sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
+      
+      - name: Import Dolt credentials
+        run: |
+          echo "$DOLTHUB_LOGIN_JWT_CONTENTS" > dolt_jwt.json
+          dolt creds import dolt_jwt.json
+        env:
+          DOLTHUB_LOGIN_JWT_CONTENTS: ${{ secrets.DOLTHUB_LOGIN_JWT_CONTENTS }}
+
       - name: Run Minerstat data pipeline
         run: |
-          uv run src/coin_profitability_scraper/crypto_slate/step_1_scrape.py
-          uv run src/coin_profitability_scraper/crypto_slate/step_2_parse_scrape.py
-          uv run src/coin_profitability_scraper/crypto_slate/step_3_algo_report.py
-          
+          uv run src/coin_profitability_scraper/crypto_slate/crypto_slate_pipeline.py

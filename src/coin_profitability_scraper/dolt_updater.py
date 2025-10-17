@@ -121,6 +121,10 @@ class DoltDatabaseUpdater(AbstractContextManager["DoltDatabaseUpdater"]):
                 logger.info("No Dolt changes to commit. Skipping push.")
                 return
 
+            logger.error(f"Dolt commit failed (exit code {commit_proc.returncode}):")
+            logger.error(f"stdout: {commit_proc.stdout}")
+            logger.error(f"stderr: {commit_proc.stderr}")
+
             # If it's some *other* error, propagate it.
             commit_proc.check_returncode()
 
