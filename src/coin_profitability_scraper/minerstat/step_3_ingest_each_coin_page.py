@@ -1,18 +1,41 @@
 """Step 3: Ingest the scraped coin HTML pages from Step 2b."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
+import dataframely as dy
 import polars as pl
 from bs4 import BeautifulSoup
 from loguru import logger
 from tqdm import tqdm
 
+from coin_profitability_scraper.data_util import pl_df_all_common_str_cleaning
 from coin_profitability_scraper.minerstat.step_2b_scrape_each_coin_page import (
     step_2b_output_folder_path,
 )
 
 step_3_output_folder = Path("./out/minerstat/") / Path(__file__).stem
+
+_default_string_kwargs: dict[Literal["min_length", "max_length"], int] = {
+    "min_length": 1,
+    "max_length": 200,
+}
+
+
+class DySchemaMinerstatCoins(dy.Schema):
+    """Schema for minerstat_coins table."""
+
+    coin_slug = dy.String(primary_key=True, nullable=False, **_default_string_kwargs)
+    reported_algorithm = dy.String(nullable=True, **_default_string_kwargs)
+    reported_difficulty = dy.String(nullable=True, **_default_string_kwargs)
+    reported_block_reward = dy.String(nullable=True, **_default_string_kwargs)
+    reported_volume = dy.String(nullable=True, **_default_string_kwargs)
+    reported_founded = dy.String(nullable=True, **_default_string_kwargs)
+    reported_network_hashrate = dy.String(nullable=True, **_default_string_kwargs)
+    reported_revenue = dy.String(nullable=True, **_default_string_kwargs)
+    reported_block_dag = dy.String(nullable=True, **_default_string_kwargs)
+    reported_block_epoch = dy.String(nullable=True, **_default_string_kwargs)
+    volume_usd = dy.Float64(nullable=True)
 
 
 def _extract_key_value_pairs(soup: BeautifulSoup) -> dict[str, str]:
@@ -59,7 +82,7 @@ def _ingest_coin_page(html_content: str, *, coin_slug: str) -> dict[str, Any]:
 
     return {
         "coin_slug": coin_slug,
-    } | _extract_key_value_pairs(soup=soup)
+    } | {"reported_" + k: v for k, v in _extract_key_value_pairs(soup=soup).items()}
 
 
 def main() -> None:
@@ -77,17 +100,21 @@ def main() -> None:
 
     df = pl.DataFrame(data)
 
+    df = pl_df_all_common_str_cleaning(df)
+
     df = df.with_columns(
         volume_usd=(
-            pl.col("volume")
+            pl.col("reported_volume")
             .str.replace_all(" USD", "", literal=True)
             .str.replace_all(",", "", literal=True)
             .cast(pl.Float64)
         ),
     )
 
+    df = DySchemaMinerstatCoins.validate(df, cast=True)
+
     step_3_output_folder.mkdir(parents=True, exist_ok=True)
-    df.write_parquet(step_3_output_folder / "minerstat_coins_detailed.parquet")
+    df.write_parquet(step_3_output_folder / "minerstat_coins.parquet")
 
 
 if __name__ == "__main__":
