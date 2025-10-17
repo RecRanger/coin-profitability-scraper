@@ -16,14 +16,16 @@ step_3_output_folder = Path("./out/crypto_slate/step_3_algo_report/")
 def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
     """Summarize the coins by their hashing algorithm."""
     df_algos = df_coins.group_by("hash_algo", maintain_order=True).agg(
-        market_cap=pl.sum("market_cap"),
+        market_cap_usd=pl.sum("market_cap_usd"),
         coin_count=pl.len(),
         coin_list=pl.col("coin_name"),
         earliest_year=pl.min("earliest_year"),
     )
     df_algos = (
         df_algos.with_columns(
-            market_cap_per_coin=(pl.col("market_cap") / pl.col("coin_count")).round(),
+            market_cap_per_coin=(
+                (pl.col("market_cap_usd") / pl.col("coin_count")).round()
+            ),
         )
         .with_columns(
             algo_sort_order=(
@@ -32,7 +34,7 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
                     | pl.col("hash_algo").is_null()
                 )
                 .then(pl.lit(0))
-                .otherwise(pl.col("market_cap"))
+                .otherwise(pl.col("market_cap_usd"))
             ),
             algo_sort_order_per_coin=(
                 pl.when(
@@ -72,8 +74,8 @@ def main() -> None:
 
     df_algos = summarize_by_algo(df_coins)
 
-    df_algos.write_parquet(step_3_output_folder / "cryptoslate_algorithms.parquet")
     step_3_output_folder.mkdir(parents=True, exist_ok=True)
+    df_algos.write_parquet(step_3_output_folder / "cryptoslate_algorithms.parquet")
     logger.info("Finished main()")
 
 
