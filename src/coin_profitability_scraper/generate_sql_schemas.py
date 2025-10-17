@@ -5,7 +5,7 @@ from typing import Any
 import sqlalchemy
 
 from coin_profitability_scraper import PACKAGE_ROOT
-from coin_profitability_scraper.minerstat.step_3_ingest_each_coin_page import (
+from coin_profitability_scraper.minerstat.step_3b_ingest_each_coin_page import (
     DySchemaMinerstatCoins,
 )
 

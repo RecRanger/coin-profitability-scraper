@@ -14,7 +14,7 @@ from coin_profitability_scraper.minerstat.step_2b_scrape_each_coin_page import (
     step_2b_output_folder_path,
 )
 
-step_3_output_folder = Path("./out/minerstat/") / Path(__file__).stem
+step_3b_output_folder = Path("./out/minerstat/") / Path(__file__).stem
 
 _default_string_kwargs: dict[Literal["min_length", "max_length"], int] = {
     "min_length": 1,
@@ -124,8 +124,8 @@ def main() -> None:
 
     df = DySchemaMinerstatCoins.validate(df, cast=True)
 
-    step_3_output_folder.mkdir(parents=True, exist_ok=True)
-    df.write_parquet(step_3_output_folder / "minerstat_coins.parquet")
+    step_3b_output_folder.mkdir(parents=True, exist_ok=True)
+    df.write_parquet(step_3b_output_folder / "minerstat_coins.parquet")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 from bs4 import BeautifulSoup
 
-from coin_profitability_scraper.minerstat.step_3_ingest_each_coin_page import (
+from coin_profitability_scraper.minerstat.step_3b_ingest_each_coin_page import (
     _extract_key_value_pairs,  # pyright: ignore[reportPrivateUsage]
 )
 
@@ -34,7 +34,7 @@ def test__extract_key_value_pairs() -> None:
    </tr>
    <tr>
       <td class="label coin_type revenue">Price for 1 BCH:</td>
-      <td class="value">504.27 USD</td>
+      <td class="value">504.27 USD</td>aa
    </tr>
    <tr>
       <td class="label coin_type founded">Founded:</td>

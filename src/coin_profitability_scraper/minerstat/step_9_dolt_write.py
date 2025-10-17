@@ -7,12 +7,12 @@ from loguru import logger
 
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL, upsert_polars_rows
-from coin_profitability_scraper.minerstat.step_3_ingest_each_coin_page import (
-    step_3_output_folder,
+from coin_profitability_scraper.minerstat.step_3b_ingest_each_coin_page import (
+    step_3b_output_folder,
 )
 
 table_to_path: dict[str, Path] = {
-    "minerstat_coins": (step_3_output_folder / "minerstat_coins.parquet"),
+    "minerstat_coins": (step_3b_output_folder / "minerstat_coins.parquet"),
 }
 
 
