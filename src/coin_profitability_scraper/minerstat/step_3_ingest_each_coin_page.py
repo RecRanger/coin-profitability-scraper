@@ -35,7 +35,16 @@ class DySchemaMinerstatCoins(dy.Schema):
     reported_revenue = dy.String(nullable=True, **_default_string_kwargs)
     reported_block_dag = dy.String(nullable=True, **_default_string_kwargs)
     reported_block_epoch = dy.String(nullable=True, **_default_string_kwargs)
-    volume_usd = dy.Float64(nullable=True)
+    volume_usd = dy.UInt64(nullable=True)
+
+    @dy.rule()
+    def _volume_usd_parsed_correctly() -> pl.Expr:
+        """`reported_volume` must be null or non-null the same as `volume_usd`."""
+        return (
+            pl.col("reported_volume")
+            .is_null()
+            .eq_missing(pl.col("volume_usd").is_null())
+        )
 
 
 def _extract_key_value_pairs(soup: BeautifulSoup) -> dict[str, str]:
@@ -108,6 +117,8 @@ def main() -> None:
             .str.replace_all(" USD", "", literal=True)
             .str.replace_all(",", "", literal=True)
             .cast(pl.Float64)
+            .round()
+            .cast(pl.UInt64)
         ),
     )
 

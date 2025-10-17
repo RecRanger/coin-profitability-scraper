@@ -10,7 +10,7 @@ CREATE TABLE minerstat_coins (
     reported_revenue VARCHAR(200), 
     reported_block_dag VARCHAR(200), 
     reported_block_epoch VARCHAR(200), 
-    volume_usd FLOAT, 
+    volume_usd BIGINT, 
     created_at DATETIME DEFAULT now() NOT NULL, 
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL, 
     PRIMARY KEY (coin_slug)
