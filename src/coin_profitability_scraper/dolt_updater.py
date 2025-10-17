@@ -94,17 +94,35 @@ class DoltDatabaseUpdater(AbstractContextManager["DoltDatabaseUpdater"]):
             msg = "Dolt repo not initialized"
             raise RuntimeError(msg)
 
-        # Stage all changes
+        # Stage all changes.
         subprocess.run(  # noqa: S603
             [self._dolt_command_path, "add", "."], cwd=self.dolt_clone_dir, check=True
         )
 
-        # Commit
-        subprocess.run(  # noqa: S603
+        # Attempt commit. Dolt will exit nonzero if nothing changed.
+        commit_proc = subprocess.run(  # noqa: S603
             [self._dolt_command_path, "commit", "-m", commit_message],
+            check=False,
             cwd=self.dolt_clone_dir,
-            check=True,
+            capture_output=True,
+            text=True,
         )
+
+        # Dolt emits something like:
+        #   "no changes added to commit"
+        # or "nothing to commit, working tree clean"
+        if commit_proc.returncode != 0:
+            stdout = commit_proc.stdout.lower()
+            stderr = commit_proc.stderr.lower()
+            if "nothing to commit" in stdout or "nothing to commit" in stderr:
+                logger.info("No Dolt changes to commit. Skipping push.")
+                return
+            if "no changes" in stdout or "no changes" in stderr:
+                logger.info("No Dolt changes to commit. Skipping push.")
+                return
+
+            # If it's some *other* error, propagate it.
+            commit_proc.check_returncode()
 
         # Push to remote.
         subprocess.run(  # noqa: S603
