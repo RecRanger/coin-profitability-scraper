@@ -53,7 +53,6 @@ def _extract_table_data(page_html: str) -> list[dict[str, str | None]]:
     for row in table.find_all("tr")[1:]:  # Skip header row.
         row_data: dict[str, str | None] = {}
         for idx, cell in enumerate(row.find_all("td")):
-            # TODO: if idx == 1, could extract the a tag info to get the slug
             if idx == 0:
                 # Special handling for first column with image and link.
                 link = cell.find("a")

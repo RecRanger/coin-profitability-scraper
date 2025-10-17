@@ -11,6 +11,9 @@ from coin_profitability_scraper.crypto51 import (
 from coin_profitability_scraper.crypto_slate import (
     step_2_parse_scrape as cryptoslate_coins_module,
 )
+from coin_profitability_scraper.cryptodelver import (
+    step_3_ingest_coins_lists as cryptodelver_coins_module,
+)
 from coin_profitability_scraper.minerstat import (
     step_3b_ingest_each_coin_page as minerstat_coins_module,
 )
@@ -31,6 +34,7 @@ TableNameLiteral = Literal[
     "miningnow_algorithms",
     "miningnow_asics",
     "crypto51_coins",
+    "cryptodelver_coins",
 ]
 
 table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] = {
@@ -57,5 +61,9 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "crypto51_coins": (
         crypto51_coins_module.output_parquet_file,
         crypto51_coins_module.DySchemaCrypto51Coins,
+    ),
+    "cryptodelver_coins": (
+        cryptodelver_coins_module.output_parquet_path,
+        cryptodelver_coins_module.DySchemaCryptodelverCoins,
     ),
 }

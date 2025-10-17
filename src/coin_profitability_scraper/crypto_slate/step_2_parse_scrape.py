@@ -15,7 +15,10 @@ from tqdm import tqdm
 from coin_profitability_scraper.crypto_slate.step_1_scrape import (
     step_1_html_folder_path,
 )
-from coin_profitability_scraper.data_util import pl_df_all_common_str_cleaning
+from coin_profitability_scraper.data_util import (
+    clean_col_name,
+    pl_df_all_common_str_cleaning,
+)
 
 step_2_output_folder = Path("./out/crypto_slate/step_2_coins_list/")
 
@@ -184,11 +187,6 @@ def _get_coin_name_from_soup(soup: BeautifulSoup) -> str | None:
         logger.error(f"Error parsing coin name: {e}")
 
     return None
-
-
-def clean_col_name(input_str: str) -> str:
-    """Clean a string to a clean column name."""
-    return re.sub(r"[^a-zA-Z]+", "_", input_str).strip("_").lower()
 
 
 def _load_file_fetch_data(html_file_path: Path) -> dict[str, date | str | float | None]:
