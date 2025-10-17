@@ -13,6 +13,29 @@ from coin_profitability_scraper.dolt_util import DOLT_REPO_URL
 output_folder = Path("./out/reports/") / Path(__file__).stem
 
 
+class DySchemaSilverStackedCoins(dy.Schema):
+    """Schema for silver stacked coins."""
+
+    # TODO: Use enum for source_site and source_table.
+    source_site = dy.String(
+        primary_key=True, nullable=False, min_length=1, max_length=100
+    )
+    # `coin_unique_source_id`: Should be the name if the name is unique, otherwise it is
+    # the slug.
+    coin_unique_source_id = dy.String(
+        primary_key=True, nullable=False, min_length=1, max_length=100
+    )
+    coin_name = dy.String(nullable=False, min_length=1, max_length=100)
+    algo_name = dy.String(nullable=True, min_length=1, max_length=100)
+
+    coin_url = dy.String(nullable=True, min_length=1, max_length=500)
+    source_table = dy.String(nullable=False, min_length=1, max_length=100)
+    coin_symbol = dy.String(nullable=True, min_length=1, max_length=100)
+    market_cap_usd = dy.UInt64(nullable=True)
+    volume_24h_usd = dy.UInt64(nullable=True)
+    coin_created_at = dy.Datetime(nullable=False)
+
+
 class DySchemaGoldAlgorithms(dy.Schema):
     """Schema for gold algorithms."""
 
@@ -50,7 +73,7 @@ def _fetch_dolt_tables() -> None:
 
     with DoltDatabaseUpdater(DOLT_REPO_URL) as dolt:
         for table_name in table_to_path_and_schema:
-            if table_name == "gold_algorithms":
+            if table_name.startswith(("gold_", "silver_")):
                 continue
 
             logger.debug(f"Loading {table_name}")
@@ -65,16 +88,14 @@ def _fetch_dolt_tables() -> None:
         logger.info("Done fetching all tables.")
 
 
-def _get_stacked_coin_list() -> pl.DataFrame:
-    """Stack all coin datasets into a normalized coin list.
-
-    TODO: Could be moved to "silver_coins" table.
-    """
+def _silver_stacked_coins() -> pl.DataFrame:
+    """Stack all coin datasets into a normalized coin list."""
     df = pl.concat(
         [
             pl.read_parquet(output_folder / "src_crypto51_coins.parquet").select(
                 source_site=pl.lit("crypto51"),
                 source_table=pl.lit("crypto51_coins"),
+                coin_unique_source_id=pl.col("coin_name"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_symbol"),
                 algo_name=pl.col("algorithm"),
@@ -83,40 +104,43 @@ def _get_stacked_coin_list() -> pl.DataFrame:
                 ),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.col("url"),
-                created_at=pl.col("created_at"),
+                coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_cryptodelver_coins.parquet").select(
                 source_site=pl.lit("cryptodelver"),
                 source_table=pl.lit("cryptodelver_coins"),
+                coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.lit(None, pl.String),
                 algo_name=pl.col("algo_name"),
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.col("coin_url"),
-                created_at=pl.col("created_at"),
+                coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_cryptoslate_coins.parquet").select(
                 source_site=pl.lit("cryptoslate"),
                 source_table=pl.lit("cryptoslate_coins"),
+                coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_slug"),
                 algo_name=pl.col("hash_algo"),
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.col("url"),
-                created_at=pl.col("created_at"),
+                coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_minerstat_coins.parquet").select(
                 source_site=pl.lit("minerstat"),
                 source_table=pl.lit("minerstat_coins"),
+                coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_slug"),
                 coin_symbol=pl.col("coin_slug"),
                 algo_name=pl.col("reported_algorithm"),
                 market_cap_usd=pl.lit(None, pl.Int64),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.lit(None, pl.String),  # TODO: Available somewhere.
-                created_at=pl.col("created_at"),
+                coin_created_at=pl.col("created_at"),
             ),
         ]
     )
@@ -131,8 +155,11 @@ def _get_stacked_coin_list() -> pl.DataFrame:
             market_cap_usd=pl.lit(None, pl.Int64),
             volume_24h_usd=pl.lit(None, pl.Int64),
             coin_url=pl.lit(None, pl.String),  # TODO: Available somewhere.
-            created_at=pl.col("created_at"),
+            coin_created_at=pl.col("created_at"),
         )
+
+    # Apply schema.
+    df = DySchemaSilverStackedCoins.validate(df, cast=True)
 
     logger.info(f"Stacked coin list with {df.height:,} entries.")
     return df
@@ -160,7 +187,7 @@ def _get_stacked_asics_list() -> pl.DataFrame:
                     pl.col("announcement_date").cast(pl.Datetime).dt.date()
                 ),
                 launch_date=(pl.col("launch_date").cast(pl.Datetime).dt.date()),
-                created_at=pl.col("created_at"),
+                asic_created_at=pl.col("created_at"),
             ),
         ]
     )
@@ -169,17 +196,19 @@ def _get_stacked_asics_list() -> pl.DataFrame:
     return df
 
 
-def _transform_coin_list_to_gold_algorithms(df_coin_list: pl.DataFrame) -> pl.DataFrame:
+def _transform_coin_list_to_gold_algorithms(
+    df_silver_stacked_coins: pl.DataFrame,
+) -> pl.DataFrame:
     """Transform coin list to algorithm list."""
     df = (
-        df_coin_list.filter(pl.col("algo_name").is_not_null())
-        .sort(["created_at"])
+        df_silver_stacked_coins.filter(pl.col("algo_name").is_not_null())
+        .sort(["coin_created_at"])
         .group_by(["algo_name"], maintain_order=True)
         .agg(
             source_sites=pl.col("source_site").unique().sort(),
             source_tables=pl.col("source_table").unique().sort(),
-            earliest_coin_created_at=pl.col("created_at").first(),
-            latest_coin_created_at=pl.col("created_at").last(),
+            earliest_coin_created_at=pl.col("coin_created_at").first(),
+            latest_coin_created_at=pl.col("coin_created_at").last(),
             # `coin_count` is approximate as names lack normalization.
             coin_count=pl.col("coin_name").n_unique(),
             earliest_coin=(
@@ -221,8 +250,8 @@ def _transform_asic_list_to_gold_algorithms(df_asic_list: pl.DataFrame) -> pl.Da
             asic_count=pl.col("asic_name").n_unique(),
             earliest_asic_announcement_date=pl.col("annoucement_date").min(),
             earliest_asic_launch_date=pl.col("launch_date").min(),
-            earliest_asic_created_at=pl.col("created_at").min(),
-            latest_asic_created_at=pl.col("created_at").max(),
+            earliest_asic_created_at=pl.col("asic_created_at").min(),
+            latest_asic_created_at=pl.col("asic_created_at").max(),
         )
     )
     logger.info(f"Transformed asic list to algorithm list with {df.height:,} entries.")
@@ -233,9 +262,18 @@ def main() -> None:
     """Summarize all algorithms."""
     _fetch_dolt_tables()
 
-    df_coins_stacked = _get_stacked_coin_list()
+    df_silver_stacked_coins = _silver_stacked_coins()
+    df_silver_stacked_coins = DySchemaSilverStackedCoins.validate(
+        df_silver_stacked_coins, cast=True
+    )
+    logger.info(
+        f"Loaded silver stacked coins with {df_silver_stacked_coins.height:,} entries."
+    )
+    df_silver_stacked_coins.write_parquet(
+        output_folder / "silver_stacked_coins.parquet"
+    )
 
-    df_algorithms = _transform_coin_list_to_gold_algorithms(df_coins_stacked)
+    df_algorithms = _transform_coin_list_to_gold_algorithms(df_silver_stacked_coins)
 
     df_algorithms_from_ascis = _transform_asic_list_to_gold_algorithms(
         _get_stacked_asics_list()

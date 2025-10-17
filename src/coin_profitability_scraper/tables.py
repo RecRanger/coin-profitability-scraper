@@ -36,6 +36,7 @@ TableNameLiteral = Literal[
     "miningnow_asics",
     "crypto51_coins",
     "cryptodelver_coins",
+    "silver_stacked_coins",
     "gold_algorithms",
 ]
 
@@ -67,6 +68,10 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "cryptodelver_coins": (
         cryptodelver_coins_module.output_parquet_path,
         cryptodelver_coins_module.DySchemaCryptodelverCoins,
+    ),
+    "silver_stacked_coins": (
+        gold_algorithms_module.output_folder / "silver_stacked_coins.parquet",
+        gold_algorithms_module.DySchemaSilverStackedCoins,
     ),
     "gold_algorithms": (
         gold_algorithms_module.output_folder / "gold_algorithms.parquet",
