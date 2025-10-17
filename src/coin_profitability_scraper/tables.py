@@ -11,8 +11,23 @@ from coin_profitability_scraper.crypto_slate import (
 from coin_profitability_scraper.minerstat import (
     step_3b_ingest_each_coin_page as minerstat_coins_module,
 )
+from coin_profitability_scraper.miningnow import (
+    step_2a_coin_list as miningnow_coins_module,
+)
+from coin_profitability_scraper.miningnow import (
+    step_2b_algo_list as miningnow_algorithms_module,
+)
+from coin_profitability_scraper.miningnow import (
+    step_2c_asic_list as miningnow_asics_module,
+)
 
-TableNameLiteral = Literal["minerstat_coins", "cryptoslate_coins"]
+TableNameLiteral = Literal[
+    "minerstat_coins",
+    "cryptoslate_coins",
+    "miningnow_coins",
+    "miningnow_algorithms",
+    "miningnow_asics",
+]
 
 table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] = {
     "minerstat_coins": (
@@ -22,5 +37,17 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "cryptoslate_coins": (
         cryptoslate_coins_module.step_2_output_folder / "cryptoslate_coins.parquet",
         cryptoslate_coins_module.DySchemaCryptoslateCoins,
+    ),
+    "miningnow_coins": (
+        miningnow_coins_module.output_parquet_path,
+        miningnow_coins_module.DySchemaMiningnowCoins,
+    ),
+    "miningnow_algorithms": (
+        miningnow_algorithms_module.output_parquet_path,
+        miningnow_algorithms_module.DySchemaMiningnowAlgorithms,
+    ),
+    "miningnow_asics": (
+        miningnow_asics_module.output_parquet_path,
+        miningnow_asics_module.DySchemaMiningnowAsics,
     ),
 }
