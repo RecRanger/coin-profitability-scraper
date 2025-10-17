@@ -16,7 +16,7 @@ from coin_profitability_scraper.util import download_as_bytes
 
 _URL = "https://miningnow.com/latest-asic-miner-list/"
 
-miningnow_step1b_output_path = Path("./out/miningnow/") / Path(__file__).stem
+miningnow_step1_output_path = Path("./out/miningnow/") / Path(__file__).stem
 
 
 def extract_valid_json_substrings(s: str) -> list[dict[str, Any]]:
@@ -78,7 +78,7 @@ def _extract_asics_data(page_html: str) -> list[dict[str, str]]:
 
     # Debugging: Save raw extracted scripts.
     (
-        miningnow_step1b_output_path / "checkpoint_2_miningnow_asics_raw_scripts.txt"
+        miningnow_step1_output_path / "checkpoint_2_miningnow_asics_raw_scripts.txt"
     ).write_text(data_fragments_together)
 
     text = data_fragments_together.replace(r"\"", '"').replace(r"\/", "/")
@@ -86,7 +86,7 @@ def _extract_asics_data(page_html: str) -> list[dict[str, str]]:
     text = start_delimiter + text.split(start_delimiter)[1]
     # Debugging: Save after split.
     (
-        miningnow_step1b_output_path / "checkpoint_3_miningnow_asics_after_split.txt"
+        miningnow_step1_output_path / "checkpoint_3_miningnow_asics_after_split.txt"
     ).write_text(text)
 
     data = list(
@@ -94,7 +94,7 @@ def _extract_asics_data(page_html: str) -> list[dict[str, str]]:
     )
     logger.info(f"Found {len(data)} JSON substrings.")
 
-    (miningnow_step1b_output_path / "checkpoint_4_json_substrings.json").write_bytes(
+    (miningnow_step1_output_path / "checkpoint_4_json_substrings.json").write_bytes(
         orjson.dumps(data, option=orjson.OPT_INDENT_2)
     )
 
@@ -103,11 +103,11 @@ def _extract_asics_data(page_html: str) -> list[dict[str, str]]:
 
 def main() -> None:
     """Scrape and parse ASICs list and other datasets."""
-    miningnow_step1b_output_path.mkdir(parents=True, exist_ok=True)
+    miningnow_step1_output_path.mkdir(parents=True, exist_ok=True)
 
     # Download the page content.
     page_contents = download_as_bytes(_URL)
-    (miningnow_step1b_output_path / "miningnow_asics_list.html").write_bytes(
+    (miningnow_step1_output_path / "miningnow_asics_list.html").write_bytes(
         page_contents
     )
     logger.info(
@@ -129,7 +129,7 @@ def main() -> None:
         assert isinstance(data, list)
 
         logger.info(f"Found {len(data)} items of type '{data_type_key}'.")
-        (miningnow_step1b_output_path / f"{data_type_key}_data.json").write_bytes(
+        (miningnow_step1_output_path / f"{data_type_key}_data.json").write_bytes(
             orjson.dumps(data, option=orjson.OPT_INDENT_2)
         )
 
