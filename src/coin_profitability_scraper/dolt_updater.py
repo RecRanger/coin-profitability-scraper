@@ -20,9 +20,11 @@ class DoltDatabaseUpdater(AbstractContextManager["DoltDatabaseUpdater"]):
     committing/pushing changes.
     """
 
-    def __init__(self, repo_url: str) -> None:
+    def __init__(self, repo_url: str, *, use_shallow_clone: bool = True) -> None:
         """Initialize the context manager."""
         self.repo_url: str = repo_url
+        self.use_shallow_clone: bool = use_shallow_clone
+
         self._dolt_sql_username: str = "root"
         self._dolt_sql_host: str = "127.0.0.1"
         self.dolt_sql_port: int = random.randint(33000, 40000)  # noqa: S311
@@ -40,9 +42,16 @@ class DoltDatabaseUpdater(AbstractContextManager["DoltDatabaseUpdater"]):
         )
         self.dolt_clone_dir.mkdir(parents=False, exist_ok=False)
 
-        # Step 2: Clone the Dolt repo
+        # Step 2: Clone the Dolt repo.
+        depth_cmd_part: list[str] = ["--depth=1"] if self.use_shallow_clone else []
         subprocess.run(  # noqa: S603
-            [self._dolt_command_path, "clone", self.repo_url, self.dolt_clone_dir],
+            [
+                self._dolt_command_path,
+                "clone",
+                self.repo_url,
+                self.dolt_clone_dir,
+                *depth_cmd_part,  # Optimization: No need to clone all history.
+            ],
             check=True,
         )
 
