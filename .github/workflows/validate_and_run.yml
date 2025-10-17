@@ -1,0 +1,76 @@
+name: Run Scripts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+  # Also run weekly.
+  schedule:
+    - cron: "20 12 * * 4"
+
+jobs:
+  validate-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format . --check
+
+      - name: Pyright check
+        run: uv run pyright .
+
+      - name: Pytest
+        run: uv run pytest tests/
+
+  run-minerstat-update:
+    runs-on: ubuntu-latest
+    depends-on: validate-job
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Run Minerstat data pipeline
+        run: |
+          uv run src/coin_profitability_scraper/minerstat/step_1a_algo_list.py
+          uv run src/coin_profitability_scraper/minerstat/step_1b_coin_report_from_api.py
+          uv run src/coin_profitability_scraper/minerstat/step_2a_scrape_each_algo_page.py
+          uv run src/coin_profitability_scraper/minerstat/step_2b_scrape_each_coin_page.py
+          uv run src/coin_profitability_scraper/minerstat/step_3b_ingest_each_coin_page.py
+          uv run src/coin_profitability_scraper/minerstat/step_9_dolt_write.py
+
+  run-crypto_slate-update:
+    runs-on: ubuntu-latest
+    depends-on: validate-job
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Run Minerstat data pipeline
+        run: |
+          uv run src/coin_profitability_scraper/crypto_slate/step_1_scrape.py
+          uv run src/coin_profitability_scraper/crypto_slate/step_2_parse_scrape.py
+          uv run src/coin_profitability_scraper/crypto_slate/step_3_algo_report.py
+          
