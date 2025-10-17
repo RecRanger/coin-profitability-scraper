@@ -27,11 +27,11 @@ class DySchemaCrypto51Coins(dy.Schema):
     )
     coin_symbol = dy.String(nullable=False, min_length=1, max_length=100)
     algorithm = dy.String(nullable=False, min_length=3, max_length=100)
-    reported_market_cap = dy.String(nullable=False, min_length=3, max_length=100)
-    reported_hash_rate = dy.String(nullable=False, min_length=3, max_length=100)
-    reported_1h_attack_cost = dy.String(nullable=False, min_length=1, max_length=100)
+    reported_market_cap = dy.String(nullable=True, min_length=3, max_length=100)
+    reported_hash_rate = dy.String(nullable=True, min_length=3, max_length=100)
+    reported_1h_attack_cost = dy.String(nullable=True, min_length=1, max_length=100)
     reported_nicehash_capability_percent = dy.String(
-        nullable=False, min_length=1, max_length=100
+        nullable=True, min_length=1, max_length=100
     )
     url = dy.String(nullable=False, min_length=20, max_length=500)
     coin_slug = dy.String(nullable=False, min_length=1, max_length=100)
@@ -81,6 +81,7 @@ def main() -> None:
 
     df = pl.DataFrame(data_list)
     df = pl_df_all_common_str_cleaning(df)
+    df = df.with_columns(pl.selectors.string().replace({"None": None}))
 
     df = df.select(
         coin_name=pl.col("Name"),
