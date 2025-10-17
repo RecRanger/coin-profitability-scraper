@@ -35,7 +35,7 @@ jobs:
 
   run-minerstat-update:
     runs-on: ubuntu-latest
-    depends-on: validate-job
+    needs: validate-job
 
     steps:
       - uses: actions/checkout@v5
@@ -57,7 +57,7 @@ jobs:
 
   run-crypto_slate-update:
     runs-on: ubuntu-latest
-    depends-on: validate-job
+    needs: validate-job
 
     steps:
       - uses: actions/checkout@v5
