@@ -70,11 +70,6 @@ def main() -> None:
     """Generate a report summarizing the parsed coin data."""
     df_coins = pl.read_parquet(step_2_output_folder / "cryptoslate_coins.parquet")
 
-    logger.info(
-        f"Loaded {len(df_coins)} coins from {df_coins['filename'].min()} to "
-        f"{df_coins['filename'].max()}"
-    )
-
     df_algos = summarize_by_algo(df_coins)
 
     df_algos.write_parquet(step_3_output_folder / "cryptoslate_algorithms.parquet")
