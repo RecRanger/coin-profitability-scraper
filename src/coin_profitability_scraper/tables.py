@@ -5,6 +5,9 @@ from typing import Literal
 
 import dataframely as dy
 
+from coin_profitability_scraper.crypto51 import (
+    step_1_scrape_main_page as crypto51_coins_module,
+)
 from coin_profitability_scraper.crypto_slate import (
     step_2_parse_scrape as cryptoslate_coins_module,
 )
@@ -27,6 +30,7 @@ TableNameLiteral = Literal[
     "miningnow_coins",
     "miningnow_algorithms",
     "miningnow_asics",
+    "crypto51_coins",
 ]
 
 table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] = {
@@ -49,5 +53,9 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "miningnow_asics": (
         miningnow_asics_module.output_parquet_path,
         miningnow_asics_module.DySchemaMiningnowAsics,
+    ),
+    "crypto51_coins": (
+        crypto51_coins_module.output_parquet_file,
+        crypto51_coins_module.DySchemaCrypto51Coins,
     ),
 }
