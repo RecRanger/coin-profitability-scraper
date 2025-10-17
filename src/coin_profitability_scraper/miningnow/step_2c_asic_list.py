@@ -121,7 +121,7 @@ def main() -> None:
     df = DySchemaMiningnowAsics.validate(df, cast=True)
 
     df.write_parquet(output_parquet_path)
-    logger.info(f"Wrote asci list: {df.shape}")
+    logger.info(f"Wrote asic list: {df.shape}")
 
 
 if __name__ == "__main__":

@@ -29,6 +29,8 @@ def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
                 engine=dolt.engine,
                 table_name=table_name,
                 df=df,
+                # Limit batch_size for certain very-wide tables.
+                batch_size={"miningnow_asics": 1}.get(table_name, 500),
             )
 
         logger.info("Done all upserts.")

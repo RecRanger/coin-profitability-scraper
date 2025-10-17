@@ -61,7 +61,7 @@ jobs:
         run: |
           uv run src/coin_profitability_scraper/minerstat/minerstat_pipeline.py
 
-  run-crypto_slate-update:
+  run-cryptoslate-update:
     runs-on: ubuntu-latest
     needs: validate-job
     timeout-minutes: 30
@@ -85,6 +85,34 @@ jobs:
         env:
           DOLTHUB_LOGIN_JWT_CONTENTS: ${{ secrets.DOLTHUB_LOGIN_JWT_CONTENTS }}
 
-      - name: Run Minerstat data pipeline
+      - name: Run Crypto Slate data pipeline
         run: |
           uv run src/coin_profitability_scraper/crypto_slate/crypto_slate_pipeline.py
+
+  run-miningnow-update:
+    runs-on: ubuntu-latest
+    needs: validate-job
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Install dolt
+        run: sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
+      
+      - name: Import Dolt credentials
+        run: |
+          echo "$DOLTHUB_LOGIN_JWT_CONTENTS" > dolt_jwt.json
+          dolt creds import dolt_jwt.json
+        env:
+          DOLTHUB_LOGIN_JWT_CONTENTS: ${{ secrets.DOLTHUB_LOGIN_JWT_CONTENTS }}
+
+      - name: Run MiningNow data pipeline
+        run: |
+          uv run src/coin_profitability_scraper/miningnow/miningnow_pipeline.py
