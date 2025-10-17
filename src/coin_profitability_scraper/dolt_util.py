@@ -17,6 +17,7 @@ def upsert_polars_rows(
     df: pl.DataFrame,
     *,
     batch_size: int = 1000,
+    exclude_float_columns_in_change_assessment: bool = True,
 ) -> None:
     """Upsert all rows from a Polars DataFrame into the given SQL table.
 
@@ -25,6 +26,9 @@ def upsert_polars_rows(
         table_name (str): Name of the SQL table
         df (pl.DataFrame): Polars DataFrame
         batch_size (int): Size of each upsert operation.
+        exclude_float_columns_in_change_assessment (bool): Whether to exclude
+            float columns from the change assessment. Float cols ALWAYS show as
+            changed.
 
     """
     # Filter the dataframe to updates only.
@@ -38,9 +42,16 @@ def upsert_polars_rows(
     df_current = df_current.cast(
         {col: dtype for col, dtype in df.schema.items() if col in df_current}
     )
+    join_cols = sorted(set(df.columns) & set(df_current.columns))
+    if exclude_float_columns_in_change_assessment:
+        join_cols = [
+            col
+            for col in join_cols
+            if df_current[col].dtype not in {pl.Float64, pl.Float32}
+        ]
     df_update = df.join(
         df_current,
-        on=sorted(set(df.columns) & set(df_current.columns)),
+        on=join_cols,
         nulls_equal=True,  # Important.
         how="anti",
     )
