@@ -48,12 +48,7 @@ jobs:
 
       - name: Run Minerstat data pipeline
         run: |
-          uv run src/coin_profitability_scraper/minerstat/step_1a_algo_list.py
-          uv run src/coin_profitability_scraper/minerstat/step_1b_coin_report_from_api.py
-          uv run src/coin_profitability_scraper/minerstat/step_2a_scrape_each_algo_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_2b_scrape_each_coin_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_3b_ingest_each_coin_page.py
-          uv run src/coin_profitability_scraper/minerstat/step_9_dolt_write.py
+          uv run src/coin_profitability_scraper/minerstat/minerstat_pipeline.py
 
   run-crypto_slate-update:
     runs-on: ubuntu-latest
@@ -70,7 +65,4 @@ jobs:
 
       - name: Run Minerstat data pipeline
         run: |
-          uv run src/coin_profitability_scraper/crypto_slate/step_1_scrape.py
-          uv run src/coin_profitability_scraper/crypto_slate/step_2_parse_scrape.py
-          uv run src/coin_profitability_scraper/crypto_slate/step_3_algo_report.py
-          
+          uv run src/coin_profitability_scraper/crypto_slate/crypto_slate_pipeline.py
