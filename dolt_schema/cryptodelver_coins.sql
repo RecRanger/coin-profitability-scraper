@@ -12,6 +12,8 @@ CREATE TABLE cryptodelver_coins (
     reported_pct_change_7d FLOAT, 
     volume_usd BIGINT, 
     market_cap_usd BIGINT, 
+    coin_url VARCHAR(500) NOT NULL, 
+    algo_url VARCHAR(500), 
     created_at DATETIME DEFAULT now() NOT NULL, 
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL, 
     PRIMARY KEY (coin_slug)

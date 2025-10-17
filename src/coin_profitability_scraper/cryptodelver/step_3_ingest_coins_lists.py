@@ -41,6 +41,8 @@ class DySchemaCryptodelverCoins(dy.Schema):
     reported_pct_change_7d = dy.Float64(nullable=True)
     volume_usd = dy.UInt64(nullable=True)
     market_cap_usd = dy.UInt64(nullable=True)
+    coin_url = dy.String(nullable=False, min_length=20, max_length=500)
+    algo_url = dy.String(nullable=True, min_length=20, max_length=500)
 
     @dy.rule()
     def _volume_usd_parsed_correctly() -> pl.Expr:
@@ -59,6 +61,11 @@ class DySchemaCryptodelverCoins(dy.Schema):
     def _algo_name_and_slug_present_together() -> pl.Expr:
         """`algo_name` and `algo_slug` must both be null or both be non-null."""
         return pl.col("algo_name").is_null() == pl.col("algo_slug").is_null()
+
+    @dy.rule()
+    def _algo_name_and_url_present_together() -> pl.Expr:
+        """`algo_name` and `algo_url` must both be null or both be non-null."""
+        return pl.col("algo_name").is_null() == pl.col("algo_url").is_null()
 
 
 def _extract_table_data(page_html: str) -> list[dict[str, str | None]]:
@@ -123,6 +130,19 @@ def main() -> None:
         reported_pct_change_7d=pl.col("change_7d").cast(pl.Float64).round(8),
         coin_slug=pl.col("name_href").str.split("/").list.get(-1),
         algo_slug=pl.col("algo_href").str.extract(r"/algorithm/([^/]+)"),
+        coin_url=(
+            (pl.lit("https://cryptodelver.com/") + pl.col("name_href"))
+            .str.replace_all("//", "/", literal=True)
+            .str.replace_all(":/", "://", literal=True)  # Replace back the https.
+        ),
+        algo_url=(
+            (
+                pl.lit("https://cryptodelver.com/")
+                + pl.col("algo_href").replace({"/assets/": None, "/algorithm/": None})
+            )
+            .str.replace_all("//", "/", literal=True)
+            .str.replace_all(":/", "://", literal=True)  # Replace back the https.
+        ),
     )
 
     df = df.with_columns(
