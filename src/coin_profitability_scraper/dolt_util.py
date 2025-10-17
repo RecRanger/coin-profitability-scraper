@@ -52,7 +52,15 @@ def upsert_polars_rows(
 
     # Define what to do on duplicate key.
     update_dict = {
-        c.name: stmt.inserted[c.name] for c in table.columns if not c.primary_key
+        c.name: stmt.inserted[c.name]
+        for c in table.columns
+        if (
+            not c.primary_key
+            and c.name
+            # Explicitly exclude `created_at` to avoid updating it.
+            not in {"created_at"}
+            and c.name in df_update.columns
+        )
     }
     stmt = stmt.on_duplicate_key_update(**update_dict)
 
