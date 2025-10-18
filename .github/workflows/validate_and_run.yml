@@ -64,7 +64,7 @@ jobs:
   run-cryptoslate-update:
     runs-on: ubuntu-latest
     needs: validate-job
-    timeout-minutes: 60 # This one specifically takes much longer.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 

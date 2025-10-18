@@ -3,6 +3,7 @@
 import queue
 import re
 from collections.abc import Iterable
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeVar
@@ -12,15 +13,17 @@ from loguru import logger
 
 from coin_profitability_scraper.util import download_as_bytes
 
-step_1_html_folder_path = Path("./out/crypto_slate/downloaded_pages/")
-start_timestamp = datetime.now(UTC)
+step_1_html_folder_path = Path("./out/crypto_slate/step_1_downloaded_coin_pages/")
 
 
 def extract_next_button_urls(html_content: str | bytes) -> list[str]:
     """Extract the URLs from the "Next" buttons on a page."""
     try:
         soup = BeautifulSoup(html_content, "html.parser")
-        next_links = soup.find_all("a", text=re.compile(r"Next \d+"))
+        next_links = soup.find_all(
+            "a",
+            text=re.compile(r"Next \d+"),  # FIXME: Deprecation warning here.
+        )
         return [str(link.get("href")) for link in next_links if link.get("href")]
 
     except Exception as e:  # noqa: BLE001
@@ -50,12 +53,14 @@ def main() -> None:
     )
     coin_urls_queue: ScrapeQueue[str] = ScrapeQueue()
 
+    coins_completed_count = 0
+    start_timestamp = datetime.now(UTC)
     while len(top_level_urls_queue) > 0:
         url = top_level_urls_queue.pop()
 
         html_content = download_as_bytes(url)
 
-        # Parse out the coins and add them to the queue_store.
+        # Parse out the coin URLs and add them to the queue_store.
         soup = BeautifulSoup(html_content, "html.parser")
         new_coin_urls: list[str] = [
             str(a["href"]).rstrip(".")
@@ -73,32 +78,47 @@ def main() -> None:
             f"Got {len(new_coin_urls)} coins and {len(next_button_urls)} next buttons."
         )
 
-        # Scrape the coin pages.
-        while len(coin_urls_queue) > 0:
-            coin_url = coin_urls_queue.pop()
+        # Scrape coin pages concurrently.
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures: dict[Future[bytes], str] = {}
+            while len(coin_urls_queue) > 0:
+                coin_url = coin_urls_queue.pop()
+                futures[executor.submit(download_as_bytes, coin_url)] = coin_url
 
-            completed_count = coin_urls_queue.completed_count()
-            if completed_count % 50 == 0:
-                coins_per_second = (
-                    completed_count
-                    / (datetime.now(UTC) - start_timestamp).total_seconds()
-                )
-                logger.info(
-                    f'Processing coin URL #{completed_count}: "{coin_url}". '
-                    f"{coins_per_second:.2f} coins per second."
-                )
+            for future in as_completed(futures):
+                coin_url = futures[future]
+                coins_completed_count += 1
 
-            page_content = download_as_bytes(coin_url)
+                try:
+                    page_content = future.result()
+                except Exception as e:  # noqa: BLE001
+                    logger.error(
+                        f"Error downloading #{coins_completed_count} - {coin_url}: {e}"
+                    )
+                    continue
 
-            if b"name-logo" not in page_content:
-                # Validate that this is a coin page with all the normal elements.
-                logger.warning(f'URL "{coin_url}" does not appear to be a coin page.')
-                continue
+                if coins_completed_count % 50 == 0:
+                    coins_per_second = (
+                        coins_completed_count
+                        / (datetime.now(UTC) - start_timestamp).total_seconds()
+                    )
+                    logger.debug(
+                        f'Progress: coin URL #{coins_completed_count}: "{coin_url}". '
+                        f"{coins_per_second:.2f} coins per second."
+                    )
 
-            (step_1_html_folder_path / (coin_url.split("/")[-2] + ".html")).write_bytes(
-                page_content,
-            )
-            # TODO: write the scrape date as a comment to the file for retrieval later
+                if b"name-logo" not in page_content:
+                    # Validate that this is a coin page with all the normal elements.
+                    logger.warning(
+                        f'URL "{coin_url}" does not appear to be a coin page.'
+                    )
+                    continue
+
+                (
+                    step_1_html_folder_path / (coin_url.split("/")[-2] + ".html")
+                ).write_bytes(page_content)
+
+                # TODO: Write the scrape date as a comment to the file.
 
     logger.info(
         f"Download complete. {top_level_urls_queue.total_count()} top-level URLs "
