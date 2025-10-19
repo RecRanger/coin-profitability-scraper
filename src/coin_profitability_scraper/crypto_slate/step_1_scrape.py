@@ -79,7 +79,7 @@ def main() -> None:
         )
 
         # Scrape coin pages concurrently.
-        with ThreadPoolExecutor(max_workers=8) as executor:
+        with ThreadPoolExecutor(max_workers=16) as executor:
             futures: dict[Future[bytes], str] = {}
             while len(coin_urls_queue) > 0:
                 coin_url = coin_urls_queue.pop()
