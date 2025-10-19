@@ -23,6 +23,15 @@ class DySchemaMiningnowCoins(dy.Schema):
     )
     coin_slug = dy.String(nullable=False, min_length=1, max_length=100)
     ticker = dy.String(nullable=False, min_length=1, max_length=50)
+    reported_founded = dy.String(nullable=True, min_length=1, max_length=100)
+    algorithm = dy.String(nullable=True, min_length=1, max_length=100)
+    price_usd = dy.Float(nullable=True)
+    market_cap_usd = dy.UInt64(nullable=True)
+    volume_usd = dy.UInt64(nullable=True)
+    change_24h = dy.Float64(nullable=True)
+    founded_date = dy.Date(nullable=True)
+    chart_svg_url = dy.String(nullable=True, min_length=25, max_length=1000)
+    chart_json_url = dy.String(nullable=True, min_length=25, max_length=1000)
     icon_light_url = dy.String(nullable=True, min_length=25, max_length=1000)
     icon_dark_url = dy.String(nullable=True, min_length=25, max_length=1000)
 
@@ -44,11 +53,29 @@ def _fetch_coins_data_json_df() -> pl.DataFrame:
 
     df = pl.DataFrame(data)
     df = df.select(
-        coin_name=pl.col("label"),
-        coin_slug=pl.col("value"),
+        coin_name=pl.col("title"),
+        coin_slug=pl.col("slug"),
         ticker=pl.col("ticker"),
         icon_light_url=pl.col("icon_light"),
         icon_dark_url=pl.col("icon_dark"),
+        reported_founded="founded",
+        algorithm="algorithm",
+        price_usd=pl.col("price").cast(pl.Float64),
+        market_cap_usd=pl.col("market_cap").cast(pl.Float64).round().cast(pl.UInt64),
+        chart_svg_url="chart_svg",
+        chart_json_url="chart_json",
+        volume_usd=pl.col("24h_volume").cast(pl.Float64).round().cast(pl.UInt64),
+        change_24h=pl.col("24h_change").cast(pl.Float64),
+        # Excluded fields:
+        # '_id',
+        # 'title',
+        # 'algo_id',
+        # 'coin_id',  # Hex characters.
+        # 'timeframes',  # JSON object with price history.
+    )
+
+    df = df.with_columns(
+        founded_date=pl.col("reported_founded").str.to_date("%b %d, %Y")
     )
     logger.info(f"Prepared coin list with {df.height} entries from coins_data.json.")
 
