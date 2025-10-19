@@ -33,6 +33,7 @@ class DySchemaSilverStackedCoins(dy.Schema):
     coin_symbol = dy.String(nullable=True, min_length=1, max_length=100)
     market_cap_usd = dy.UInt64(nullable=True)
     volume_24h_usd = dy.UInt64(nullable=True)
+    founded_date = dy.Date(nullable=True)
     coin_created_at = dy.Datetime(nullable=False)
 
 
@@ -104,6 +105,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 ),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.col("url"),
+                founded_date=pl.lit(None, pl.Date),
                 coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_cryptodelver_coins.parquet").select(
@@ -116,6 +118,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.col("coin_url"),
+                founded_date=pl.lit(None, pl.Date),
                 coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_cryptoslate_coins.parquet").select(
@@ -128,6 +131,10 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.col("url"),
+                founded_date=pl.coalesce(
+                    pl.col("earliest_logo_date"),
+                    pl.date(pl.col("earliest_year_in_description"), 1, 1),
+                ),
                 coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_minerstat_coins.parquet").select(
@@ -140,6 +147,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 market_cap_usd=pl.lit(None, pl.Int64),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.lit("https://minerstat.com/coin/") + pl.col("coin_slug"),
+                founded_date=pl.date(pl.col("reported_founded").cast(pl.UInt32), 1, 1),
                 coin_created_at=pl.col("created_at"),
             ),
             pl.read_parquet(output_folder / "src_miningnow_coins.parquet").select(
@@ -154,6 +162,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_url=pl.format(
                     "https://miningnow.com/coins/{}/", pl.col("coin_slug")
                 ),
+                founded_date=pl.col("founded_date"),
                 coin_created_at=pl.col("created_at"),
             ),
         ]
@@ -276,12 +285,12 @@ def main() -> None:
 
     df_algorithms = _transform_coin_list_to_gold_algorithms(df_silver_stacked_coins)
 
-    df_algorithms_from_ascis = _transform_asic_list_to_gold_algorithms(
+    df_algorithms_from_asics = _transform_asic_list_to_gold_algorithms(
         _get_stacked_asics_list()
     )
 
     df_algorithms = df_algorithms.join(
-        df_algorithms_from_ascis,
+        df_algorithms_from_asics,
         on="algo_name",
         validate="1:1",
         how="left",  # Must have 1+ coins before we care about an ASIC.
