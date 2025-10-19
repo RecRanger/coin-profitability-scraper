@@ -4,6 +4,7 @@ import sys
 from collections.abc import Sequence
 
 import polars as pl
+import sqlalchemy
 from loguru import logger
 
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
@@ -33,6 +34,22 @@ def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
                 batch_size={"miningnow_asics": 1}.get(table_name, 500),
             )
 
+            # For certain datasets, also DELETE rows no longer in the upsert content.
+            if table_name in {"gold_algorithms"}:
+                assert len(dy_schema.primary_keys()) == 1, (
+                    "Composite primary keys not supported."
+                )
+                primary_key_column = dy_schema.primary_keys()[0]
+                with dolt.engine.begin() as conn:
+                    result = conn.execute(
+                        sqlalchemy.text(
+                            f"DELETE FROM {table_name} "  # noqa: S608
+                            f"WHERE {primary_key_column} NOT IN :ids"
+                        ),
+                        {"ids": tuple(df[primary_key_column].to_list())},
+                    )
+                    logger.info(f"Pruned {result.rowcount} rows from {table_name}")
+
         logger.info("Done all upserts.")
 
         commit_message = "Auto-updated tables: " + ", ".join(tables_to_update)
@@ -43,10 +60,21 @@ def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
 
 
 if __name__ == "__main__":
-    main(
-        [
-            table_name
-            for table_name in sys.argv
-            if table_name in table_to_path_and_schema
-        ]
-    )
+    if len(sys.argv) == 1:
+        logger.info("Select a table to update (or re-run and pass as CLI argument).")
+        table_name = input("Table name: ")
+        assert table_name in table_to_path_and_schema
+        main([table_name])
+    else:
+        assert all(table_name in table_to_path_and_schema for table_name in sys.argv), (
+            f"Unknown tables passed as CLI args: {', '.join(sys.argv)}"
+        )
+        logger.info(f"Updating tables passed as CLI args: {', '.join(sys.argv)}")
+
+        main(
+            [
+                table_name
+                for table_name in sys.argv
+                if table_name in table_to_path_and_schema
+            ]
+        )

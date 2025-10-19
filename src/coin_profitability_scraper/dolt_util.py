@@ -3,6 +3,7 @@
 import polars as pl
 import sqlalchemy
 import sqlalchemy.dialects.mysql
+from loguru import logger
 from tqdm import tqdm
 
 DOLT_DATABASE_NAME = "cryptocurrency-coin-algo-data"
@@ -56,6 +57,11 @@ def upsert_polars_rows(
         how="anti",
     )
     del df  # Ensure we always use `df_update` now.
+    logger.info(
+        f'Upsert to "{table_name}". '
+        f"Changing/adding {df_update.height:,}/{df_current.height:,} rows. "
+        f"Skipping {df_current.height - df_update.height:,} unchanged rows."
+    )
 
     if df_update.height == 0:
         return
