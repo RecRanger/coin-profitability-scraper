@@ -139,24 +139,25 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 algo_name=pl.col("reported_algorithm"),
                 market_cap_usd=pl.lit(None, pl.Int64),
                 volume_24h_usd=pl.col("volume_usd"),
-                coin_url=pl.lit(None, pl.String),  # TODO: Available somewhere.
+                coin_url=pl.lit("https://minerstat.com/coin/") + pl.col("coin_slug"),
+                coin_created_at=pl.col("created_at"),
+            ),
+            pl.read_parquet(output_folder / "src_miningnow_coins.parquet").select(
+                source_site=pl.lit("miningnow"),
+                source_table=pl.lit("miningnow_coins"),
+                coin_unique_source_id=pl.col("coin_name"),
+                coin_name=pl.col("coin_name"),
+                coin_symbol=pl.col("ticker"),
+                algo_name=pl.col("algorithm"),
+                market_cap_usd=pl.col("market_cap_usd"),
+                volume_24h_usd=pl.col("volume_usd"),
+                coin_url=pl.format(
+                    "https://miningnow.com/coins/{}/", pl.col("coin_slug")
+                ),
                 coin_created_at=pl.col("created_at"),
             ),
         ]
     )
-
-    if 0:  # TODO: Use this once we have algorithms tracked.
-        pl.read_parquet(output_folder / "src_miningnow_coins.parquet").select(
-            source_site=pl.lit("miningnow"),
-            source_table=pl.lit("miningnow_coins"),
-            coin_name=pl.col("coin_name"),
-            coin_symbol=pl.col("ticker"),
-            algo_name=pl.lit(None),  # FIXME: Missing.
-            market_cap_usd=pl.lit(None, pl.Int64),
-            volume_24h_usd=pl.lit(None, pl.Int64),
-            coin_url=pl.lit(None, pl.String),  # TODO: Available somewhere.
-            coin_created_at=pl.col("created_at"),
-        )
 
     # Apply schema.
     df = DySchemaSilverStackedCoins.validate(df, cast=True)
