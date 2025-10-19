@@ -11,3 +11,7 @@ ETL pipelines in this repo update the Dolt repository at: https://www.dolthub.co
 * https://www.crypto51.app
 * Cryptodelver
 * MiningNow
+
+## Future Data Sources
+
+* https://poolbay.io/coins

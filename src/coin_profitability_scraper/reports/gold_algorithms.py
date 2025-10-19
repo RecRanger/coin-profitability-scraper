@@ -9,6 +9,7 @@ from loguru import logger
 
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL
+from coin_profitability_scraper.reports.aliases import ALGORITHM_MAPPINGS
 
 output_folder = Path("./out/reports/") / Path(__file__).stem
 
@@ -27,6 +28,7 @@ class DySchemaSilverStackedCoins(dy.Schema):
     )
     coin_name = dy.String(nullable=False, min_length=1, max_length=100)
     algo_name = dy.String(nullable=True, min_length=1, max_length=100)
+    reported_algo_name = dy.String(nullable=True, min_length=1, max_length=100)
 
     coin_url = dy.String(nullable=True, min_length=1, max_length=500)
     source_table = dy.String(nullable=False, min_length=1, max_length=100)
@@ -61,6 +63,15 @@ class DySchemaGoldAlgorithms(dy.Schema):
     earliest_asic_launch_date = dy.Date(nullable=True)
     earliest_asic_created_at = dy.Date(nullable=True)
     latest_asic_created_at = dy.Date(nullable=True)
+
+    reported_aliases_json = dy.String(nullable=False, min_length=2, max_length=1000)
+
+    @dy.rule()
+    def reported_aliases_json_is_not_empty_list() -> pl.Expr:
+        """Ensure reported_aliases_json is not an empty list."""
+        return pl.col("reported_aliases_json").map_elements(
+            lambda x: len(orjson.loads(x)) > 0, return_dtype=pl.Boolean
+        )
 
 
 def _fetch_dolt_tables() -> None:
@@ -99,7 +110,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_unique_source_id=pl.col("coin_name"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_symbol"),
-                algo_name=pl.col("algorithm"),
+                reported_algo_name=pl.col("algorithm"),
                 market_cap_usd=pl.lit(  # TODO: Data just needs cleaning.
                     None, pl.Int64
                 ),
@@ -114,7 +125,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.lit(None, pl.String),
-                algo_name=pl.col("algo_name"),
+                reported_algo_name=pl.col("algo_name"),
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.col("coin_url"),
@@ -127,7 +138,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_slug"),
-                algo_name=pl.col("hash_algo"),
+                reported_algo_name=pl.col("hash_algo"),
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.col("url"),
@@ -143,7 +154,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_unique_source_id=pl.col("coin_slug"),
                 coin_name=pl.col("coin_slug"),
                 coin_symbol=pl.col("coin_slug"),
-                algo_name=pl.col("reported_algorithm"),
+                reported_algo_name=pl.col("reported_algorithm"),
                 market_cap_usd=pl.lit(None, pl.Int64),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.lit("https://minerstat.com/coin/") + pl.col("coin_slug"),
@@ -156,7 +167,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_unique_source_id=pl.col("coin_name"),
                 coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("ticker"),
-                algo_name=pl.col("algorithm"),
+                reported_algo_name=pl.col("algorithm"),
                 market_cap_usd=pl.col("market_cap_usd"),
                 volume_24h_usd=pl.col("volume_usd"),
                 coin_url=pl.format(
@@ -166,6 +177,10 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 coin_created_at=pl.col("created_at"),
             ),
         ]
+    )
+
+    df = df.with_columns(
+        algo_name=pl.col("reported_algo_name").replace(ALGORITHM_MAPPINGS)
     )
 
     # Apply schema.
@@ -186,20 +201,24 @@ def _get_stacked_asics_list() -> pl.DataFrame:
                 source_site=pl.lit("crypto51"),
                 source_table=pl.lit("crypto51_asics"),
                 asic_name=pl.col("title"),
-                algo_name=pl.col("algo_title"),
+                reported_algo_name=pl.col("algo_title"),
                 hash_rate=pl.col("hash_rate"),
                 hash_rate_units=pl.col("hash_rate_type_title"),
                 cooling_type=pl.col("cooling"),
                 price_usd=pl.col("best_price_usd"),
                 power_watts=pl.col("power_watts"),
                 weight_kg=pl.col("weight_kg"),
-                annoucement_date=(
+                announcement_date=(
                     pl.col("announcement_date").cast(pl.Datetime).dt.date()
                 ),
                 launch_date=(pl.col("launch_date").cast(pl.Datetime).dt.date()),
                 asic_created_at=pl.col("created_at"),
             ),
         ]
+    )
+
+    df = df.with_columns(
+        algo_name=pl.col("reported_algo_name").replace(ALGORITHM_MAPPINGS)
     )
 
     logger.info(f"Stacked asic list with {df.height:,} entries.")
@@ -227,10 +246,12 @@ def _transform_coin_list_to_gold_algorithms(
             latest_coin=(
                 (pl.col("coin_name") + pl.lit(" @ ") + pl.col("source_site")).last()
             ),
+            # TODO: Could add a "first_founded_coin" and "first_founded_coin_date".
             # FIXME: These sum across ALL coin reports (including duplicate reports from
             # different sources for the same coin). Good enough heuristic though.
             market_cap_usd=pl.col("market_cap_usd").sum(),
             volume_24h_usd=pl.col("volume_24h_usd").sum(),
+            reported_aliases_from_coins=pl.col("reported_algo_name").unique().sort(),
         )
     )
 
@@ -258,10 +279,11 @@ def _transform_asic_list_to_gold_algorithms(df_asic_list: pl.DataFrame) -> pl.Da
         .group_by(["algo_name"], maintain_order=True)
         .agg(
             asic_count=pl.col("asic_name").n_unique(),
-            earliest_asic_announcement_date=pl.col("annoucement_date").min(),
+            earliest_asic_announcement_date=pl.col("announcement_date").min(),
             earliest_asic_launch_date=pl.col("launch_date").min(),
             earliest_asic_created_at=pl.col("asic_created_at").min(),
             latest_asic_created_at=pl.col("asic_created_at").max(),
+            reported_aliases_from_asics=pl.col("reported_algo_name").unique().sort(),
         )
     )
     logger.info(f"Transformed asic list to algorithm list with {df.height:,} entries.")
@@ -295,6 +317,24 @@ def main() -> None:
         validate="1:1",
         how="left",  # Must have 1+ coins before we care about an ASIC.
     )
+
+    # Merge the reported aliases from coins and asics.
+    df_algorithms = df_algorithms.with_columns(
+        reported_aliases_json=(
+            pl.concat_list(
+                pl.col("reported_aliases_from_coins").fill_null(
+                    pl.lit([], pl.List(pl.String))
+                ),
+                pl.col("reported_aliases_from_asics").fill_null(
+                    pl.lit([], pl.List(pl.String))
+                ),
+            )
+            .list.unique()
+            .list.sort()
+            .map_elements(lambda x: orjson.dumps(x.to_list()), pl.Binary)
+            .cast(pl.String)
+        )
+    ).drop("reported_aliases_from_coins", "reported_aliases_from_asics")
 
     # Cast all datetime cols to dates.
     df_algorithms = df_algorithms.with_columns(pl.selectors.datetime().dt.date())

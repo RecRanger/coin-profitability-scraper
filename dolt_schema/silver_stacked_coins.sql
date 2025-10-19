@@ -4,6 +4,7 @@ CREATE TABLE silver_stacked_coins (
     coin_unique_source_id VARCHAR(100) NOT NULL, 
     coin_name VARCHAR(100) NOT NULL, 
     algo_name VARCHAR(100), 
+    reported_algo_name VARCHAR(100), 
     coin_url VARCHAR(500), 
     source_table VARCHAR(100) NOT NULL, 
     coin_symbol VARCHAR(100), 
