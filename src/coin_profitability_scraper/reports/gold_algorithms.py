@@ -92,6 +92,7 @@ def _fetch_dolt_tables() -> None:
             df = pl.read_database(
                 f"SELECT * FROM {table_name}",  # noqa: S608
                 connection=dolt.engine,
+                infer_schema_length=None,  # Use all rows.
             )
             logger.info(f"Loaded {table_name}: {df.shape}")
 

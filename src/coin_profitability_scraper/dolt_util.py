@@ -37,6 +37,7 @@ def upsert_polars_rows(
     df_current = pl.read_database(
         query=f"SELECT * FROM {table_name}",  # noqa: S608
         connection=engine,
+        infer_schema_length=None,  # Use all rows.
     )
     # Cast so that join works, especially in case `df_current` is empty (brand new
     # table).
