@@ -242,3 +242,5 @@ jobs:
       - name: Run Notifications script
         run: |
           uv run src/coin_profitability_scraper/notify/notify_new_gold_algorithms.py
+        env:
+          NTFY_TOPIC_NAME: ${{ secrets.NTFY_TOPIC_NAME }}
