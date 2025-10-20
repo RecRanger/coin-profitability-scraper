@@ -3,6 +3,7 @@
 import sys
 from collections.abc import Sequence
 
+import backoff
 import polars as pl
 import sqlalchemy
 from loguru import logger
@@ -12,49 +13,58 @@ from coin_profitability_scraper.dolt_util import DOLT_REPO_URL, upsert_polars_ro
 from coin_profitability_scraper.tables import TableNameLiteral, table_to_path_and_schema
 
 
+@backoff.on_exception(
+    backoff.expo,
+    Exception,
+    max_time=60,
+    max_tries=10,
+    on_backoff=lambda x: logger.warning(f"Retrying: {x}"),
+)
+def _push_a_table(table_name: TableNameLiteral) -> None:
+    """Push a single table to DoltHub."""
+    (parquet_path, dy_schema) = table_to_path_and_schema[table_name]
+    with DoltDatabaseUpdater(DOLT_REPO_URL) as dolt:
+        logger.info(f"Loading {table_name}")
+        df = pl.read_parquet(parquet_path)
+        df = dy_schema.validate(df, cast=True)
+        logger.info(f"Loaded {table_name}: {df.shape}")
+        upsert_polars_rows(
+            engine=dolt.engine,
+            table_name=table_name,
+            df=df,
+            # Limit batch_size for certain very-wide tables.
+            batch_size={"miningnow_asics": 1}.get(table_name, 500),
+        )
+
+        # For certain datasets, also DELETE rows no longer in the upsert content.
+        if table_name in {"gold_algorithms"}:
+            assert len(dy_schema.primary_keys()) == 1, (
+                "Composite primary keys not supported."
+            )
+            primary_key_column = dy_schema.primary_keys()[0]
+            with dolt.engine.begin() as conn:
+                result = conn.execute(
+                    sqlalchemy.text(
+                        f"DELETE FROM {table_name} "  # noqa: S608
+                        f"WHERE {primary_key_column} NOT IN :ids"
+                    ),
+                    {"ids": tuple(df[primary_key_column].to_list())},
+                )
+                logger.info(f"Pruned {result.rowcount} rows from {table_name}")
+
+        logger.info("Done all upserts.")
+
+        commit_message = f"Auto-updated table: {table_name}"
+        dolt.dolt_commit_and_push(commit_message=commit_message)
+        logger.info("Done commit and push.")
+
+
 def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
     """Write data to DoltHub database."""
     logger.info(f"Updating dolt tables: {', '.join(tables_to_update)}")
 
-    with DoltDatabaseUpdater(DOLT_REPO_URL) as dolt:
-        for table_name, (parquet_path, dy_schema) in table_to_path_and_schema.items():
-            if table_name not in tables_to_update:
-                logger.debug(f"Skipping {table_name}")
-                continue
-
-            logger.info(f"Loading {table_name}")
-            df = pl.read_parquet(parquet_path)
-            df = dy_schema.validate(df, cast=True)
-            logger.info(f"Loaded {table_name}: {df.shape}")
-            upsert_polars_rows(
-                engine=dolt.engine,
-                table_name=table_name,
-                df=df,
-                # Limit batch_size for certain very-wide tables.
-                batch_size={"miningnow_asics": 1}.get(table_name, 500),
-            )
-
-            # For certain datasets, also DELETE rows no longer in the upsert content.
-            if table_name in {"gold_algorithms"}:
-                assert len(dy_schema.primary_keys()) == 1, (
-                    "Composite primary keys not supported."
-                )
-                primary_key_column = dy_schema.primary_keys()[0]
-                with dolt.engine.begin() as conn:
-                    result = conn.execute(
-                        sqlalchemy.text(
-                            f"DELETE FROM {table_name} "  # noqa: S608
-                            f"WHERE {primary_key_column} NOT IN :ids"
-                        ),
-                        {"ids": tuple(df[primary_key_column].to_list())},
-                    )
-                    logger.info(f"Pruned {result.rowcount} rows from {table_name}")
-
-        logger.info("Done all upserts.")
-
-        commit_message = "Auto-updated tables: " + ", ".join(tables_to_update)
-        dolt.dolt_commit_and_push(commit_message=commit_message)
-        logger.info("Done commit and push.")
+    for table_name in tables_to_update:
+        _push_a_table(table_name)
 
     logger.info(f"Updated dolt tables: {', '.join(tables_to_update)}")
 
