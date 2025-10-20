@@ -26,6 +26,9 @@ from coin_profitability_scraper.miningnow import (
 from coin_profitability_scraper.miningnow import (
     step_2c_asic_list as miningnow_asics_module,
 )
+from coin_profitability_scraper.notify import (
+    notify_new_gold_algorithms as notify_new_gold_algorithms_module,
+)
 from coin_profitability_scraper.reports import gold_algorithms as gold_algorithms_module
 
 TableNameLiteral = Literal[
@@ -38,6 +41,7 @@ TableNameLiteral = Literal[
     "cryptodelver_coins",
     "silver_stacked_coins",
     "gold_algorithms",
+    "notify_log_new_algorithms",
 ]
 
 table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] = {
@@ -76,5 +80,12 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "gold_algorithms": (
         gold_algorithms_module.output_folder / "gold_algorithms.parquet",
         gold_algorithms_module.DySchemaGoldAlgorithms,
+    ),
+    "notify_log_new_algorithms": (
+        (
+            notify_new_gold_algorithms_module.store_folder
+            / "notify_log_new_algorithms.parquet"
+        ),
+        notify_new_gold_algorithms_module.DySchemaNotifyLogNewAlgorithms,
     ),
 }

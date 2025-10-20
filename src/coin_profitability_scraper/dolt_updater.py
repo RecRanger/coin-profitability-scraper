@@ -9,6 +9,7 @@ from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
 
+import polars as pl
 import sqlalchemy
 from loguru import logger
 
@@ -90,6 +91,23 @@ class DoltDatabaseUpdater(AbstractContextManager["DoltDatabaseUpdater"]):
                 time.sleep(0.5)
 
         return self
+
+    def read_table_to_polars(self, table_name: str) -> pl.DataFrame:
+        """Read a Dolt table into a Polars DataFrame."""
+        df: pl.DataFrame = pl.read_database(
+            f"SELECT * FROM {table_name}",  # noqa: S608
+            connection=self.engine,
+            infer_schema_length=None,  # Use all rows.
+        )
+        return df
+
+    def read_query_to_polars(self, query: str) -> pl.DataFrame:
+        """Read a Dolt table into a Polars DataFrame."""
+        return pl.read_database(
+            query,
+            connection=self.engine,
+            infer_schema_length=None,  # Use all rows.
+        )
 
     def dolt_commit_and_push(self, commit_message: str) -> None:
         """Stage, commit, and push changes to the Dolt remote.

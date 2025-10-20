@@ -89,11 +89,7 @@ def _fetch_dolt_tables() -> None:
                 continue
 
             logger.debug(f"Loading {table_name}")
-            df = pl.read_database(
-                f"SELECT * FROM {table_name}",  # noqa: S608
-                connection=dolt.engine,
-                infer_schema_length=None,  # Use all rows.
-            )
+            df = dolt.read_table_to_polars(table_name)
             logger.info(f"Loaded {table_name}: {df.shape}")
 
             df.write_parquet(output_folder / f"src_{table_name}.parquet")
