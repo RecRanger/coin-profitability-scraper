@@ -5,9 +5,9 @@ on:
     branches: [ main ]
   pull_request:
   workflow_dispatch:
-  # Also run twice per week.
+  # Run every 2 days at 12:20 PM UTC.
   schedule:
-    - cron: "20 12 * * 2,6"
+    - cron: "20 12 */2 * *"
 
 jobs:
   validate-job:
