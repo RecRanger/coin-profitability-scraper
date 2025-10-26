@@ -1,0 +1,1 @@
+"""WhereToMine.io scraper package."""

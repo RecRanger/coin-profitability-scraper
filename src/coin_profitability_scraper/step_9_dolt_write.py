@@ -33,7 +33,9 @@ def _push_a_table(table_name: TableNameLiteral) -> None:
             table_name=table_name,
             df=df,
             # Limit batch_size for certain very-wide tables.
-            batch_size={"miningnow_asics": 1}.get(table_name, 500),
+            batch_size={"miningnow_asics": 1, "wheretomine_coins": 1}.get(
+                table_name, 500
+            ),
         )
 
         # For certain datasets, also DELETE rows no longer in the upsert content.

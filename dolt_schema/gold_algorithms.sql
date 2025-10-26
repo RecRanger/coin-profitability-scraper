@@ -1,8 +1,8 @@
 
 CREATE TABLE gold_algorithms (
     algo_name VARCHAR(100) NOT NULL, 
-    source_sites_json VARCHAR(100) NOT NULL, 
-    source_tables_json VARCHAR(100) NOT NULL, 
+    source_sites_json VARCHAR(1000) NOT NULL, 
+    source_tables_json VARCHAR(1000) NOT NULL, 
     coin_count BIGINT NOT NULL, 
     earliest_coin_created_at DATE NOT NULL, 
     latest_coin_created_at DATE NOT NULL, 
