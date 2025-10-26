@@ -23,9 +23,11 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "Keccak": ["KECCAK"],  # Maybe include "KECCAK-256 (SHA-3)"
     "KHeavyHash": ["kHeavyHash"],
     "LPoS": ["LPos", "LPoS", "LPOS"],
+    "Lyra2 MintMe": ["Lyra2 MintMe", "Lyra2 MintMe version"],
     "Lyra2Z": ["Lyra2z"],
     "M7M": ["m7m"],
-    "NexaPoW": ["Nexa Pow", "NexaPow", "NEXAPOW", "NexaPow"],
+    "Myriad-Groestl": ["Myr-Groestl", "Myriad Groestl"],
+    "NexaPoW": ["Nexa Pow", "NexaPow", "NEXAPOW", "NexaPow", "NexaHash", "Nexahash"],
     "PoD": ["POD"],
     "Quark": ["QUARK", "quark"],
     "QuBit": ["Qubit", "QUbit", "qubit"],
@@ -35,6 +37,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "SHA256DT": ["SHA256dT", "SHA-256dT"],  # Note: Different than SHA-256D.
     "VerusHash": ["Verus hash", "VerusHash", "Verushash"],
     "XEVAN": ["Xevan"],
+    "YesPower": ["YesPower", "Yespower", "YesPoWer"],
     "yescrypt": ["Yescript", "YesCript", "yescript", "Yescrypt"],  # Fixes typos.
     "XelisHash-V2": ["Xelishashv2"],
 }
@@ -60,6 +63,9 @@ def pre_mapping_normalize_algorithm_names(expr: pl.Expr) -> pl.Expr:
     expr = expr.str.replace(
         r"(?i)equihash(?:[(, ]*)(\d+)[,_ ](\d+)(?:[), ]*)", r"Equihash(${1},${2})"
     )
+
+    # Cuckatoo capitalization.
+    expr = expr.str.replace_all(r"(?i)\b(cuckatoo)", "Cuckatoo")
 
     return expr  # noqa: RET504
 

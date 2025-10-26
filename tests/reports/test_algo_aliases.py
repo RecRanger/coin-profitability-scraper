@@ -17,6 +17,8 @@ def test_pre_mapping_normalize_algorithm_names() -> None:
             {"input": "KawPow", "expected": "KawPow"},
             {"input": "EquiHash 96,5", "expected": "Equihash(96,5)"},
             {"input": "EquiHash 96_15", "expected": "Equihash(96,15)"},
+            {"input": "cuckAToo", "expected": "Cuckatoo"},
+            {"input": "cuckAToo31", "expected": "Cuckatoo31"},
         ]
     )
 
