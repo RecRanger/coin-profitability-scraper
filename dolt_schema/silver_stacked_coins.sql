@@ -3,6 +3,7 @@ CREATE TABLE silver_stacked_coins (
     source_site VARCHAR(100) NOT NULL, 
     coin_unique_source_id VARCHAR(100) NOT NULL, 
     coin_name VARCHAR(100) NOT NULL, 
+    reported_coin_name VARCHAR(100) NOT NULL, 
     algo_name VARCHAR(100), 
     reported_algo_name VARCHAR(100), 
     coin_url VARCHAR(500), 

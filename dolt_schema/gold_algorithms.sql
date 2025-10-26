@@ -16,6 +16,7 @@ CREATE TABLE gold_algorithms (
     earliest_asic_created_at DATE, 
     latest_asic_created_at DATE, 
     reported_aliases_json VARCHAR(1000) NOT NULL, 
+    coin_names_json VARCHAR(10000) NOT NULL, 
     created_at DATETIME DEFAULT now() NOT NULL, 
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL, 
     PRIMARY KEY (algo_name)

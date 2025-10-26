@@ -1,5 +1,6 @@
 """Summarize all algorithms."""
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import dataframely as dy
@@ -27,6 +28,7 @@ class DySchemaSilverStackedCoins(dy.Schema):
         primary_key=True, nullable=False, min_length=1, max_length=100
     )
     coin_name = dy.String(nullable=False, min_length=1, max_length=100)
+    reported_coin_name = dy.String(nullable=False, min_length=1, max_length=100)
     algo_name = dy.String(nullable=True, min_length=1, max_length=100)
     reported_algo_name = dy.String(nullable=True, min_length=1, max_length=100)
 
@@ -66,6 +68,8 @@ class DySchemaGoldAlgorithms(dy.Schema):
 
     reported_aliases_json = dy.String(nullable=False, min_length=2, max_length=1000)
 
+    coin_names_json = dy.String(nullable=False, min_length=2, max_length=10_000)
+
     @dy.rule()
     def reported_aliases_json_is_not_empty_list() -> pl.Expr:
         """Ensure reported_aliases_json is not an empty list."""
@@ -97,6 +101,50 @@ def _fetch_dolt_tables() -> None:
         logger.info("Done fetching all tables.")
 
 
+def _create_coin_name_normalization_map(
+    all_coin_names: Sequence[str],
+) -> dict[str, str]:
+    """Create a normalization map for reported_coin_name to coin_name.
+
+    Groups by lowercased names with characters stripped (boring form), then picks
+    a specific case for each group.
+    """
+    df = pl.DataFrame({"reported_coin_name": all_coin_names}).unique()
+    input_unique_coin_name_list = set(df["reported_coin_name"].to_list())
+    df = df.with_columns(
+        coin_name_normalized=(
+            pl.col("reported_coin_name")
+            .str.to_lowercase()
+            .str.replace_all(r"[^A-Za-z0-9]", "")
+        )
+    )
+    df = df.group_by("coin_name_normalized").agg(
+        coin_names_in_group=pl.col("reported_coin_name").unique().sort(),
+        count=pl.col("reported_coin_name").n_unique(),
+    )
+    normalization_map: dict[str, str] = {}
+    for row in df.iter_rows(named=True):
+        # Pick the first name in sorted order as the canonical name.
+        canonical_name = row["coin_names_in_group"][0]
+        for name in row["coin_names_in_group"]:
+            # Logical assert. Should not happen.
+            assert name not in normalization_map, (
+                f"Duplicate mapping for {name}: "
+                f"{normalization_map[name]} vs {canonical_name}"
+            )
+
+            if canonical_name not in {None, ""}:
+                normalization_map[name] = canonical_name
+            else:
+                normalization_map[name] = name  # Fallback to original name.
+
+    assert set(normalization_map.keys()) == input_unique_coin_name_list, (
+        "Normalization map keys do not match input unique coin name list."
+    )
+
+    return normalization_map
+
+
 def _silver_stacked_coins() -> pl.DataFrame:
     """Stack all coin datasets into a normalized coin list."""
     df = pl.concat(
@@ -105,7 +153,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("crypto51"),
                 source_table=pl.lit("crypto51_coins"),
                 coin_unique_source_id=pl.col("coin_name"),
-                coin_name=pl.col("coin_name"),
+                reported_coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_symbol"),
                 reported_algo_name=pl.col("algorithm"),
                 market_cap_usd=pl.lit(  # TODO: Data just needs cleaning.
@@ -120,7 +168,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("cryptodelver"),
                 source_table=pl.lit("cryptodelver_coins"),
                 coin_unique_source_id=pl.col("coin_slug"),
-                coin_name=pl.col("coin_name"),
+                reported_coin_name=pl.col("coin_name"),
                 coin_symbol=pl.lit(None, pl.String),
                 reported_algo_name=pl.col("algo_name"),
                 market_cap_usd=pl.col("market_cap_usd"),
@@ -133,7 +181,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("cryptoslate"),
                 source_table=pl.lit("cryptoslate_coins"),
                 coin_unique_source_id=pl.col("coin_slug"),
-                coin_name=pl.col("coin_name"),
+                reported_coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_slug"),
                 reported_algo_name=pl.col("hash_algo"),
                 market_cap_usd=pl.col("market_cap_usd"),
@@ -149,7 +197,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("minerstat"),
                 source_table=pl.lit("minerstat_coins"),
                 coin_unique_source_id=pl.col("coin_slug"),
-                coin_name=pl.col("coin_slug"),
+                reported_coin_name=pl.col("coin_slug"),
                 coin_symbol=pl.col("coin_slug"),
                 reported_algo_name=pl.col("reported_algorithm"),
                 market_cap_usd=pl.lit(None, pl.Int64),
@@ -162,7 +210,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("miningnow"),
                 source_table=pl.lit("miningnow_coins"),
                 coin_unique_source_id=pl.col("coin_name"),
-                coin_name=pl.col("coin_name"),
+                reported_coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("ticker"),
                 reported_algo_name=pl.col("algorithm"),
                 market_cap_usd=pl.col("market_cap_usd"),
@@ -177,7 +225,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 source_site=pl.lit("wheretomine"),
                 source_table=pl.lit("wheretomine_coins"),
                 coin_unique_source_id=pl.col("coin_name"),
-                coin_name=pl.col("coin_name"),
+                reported_coin_name=pl.col("coin_name"),
                 coin_symbol=pl.col("coin_abbreviation"),
                 reported_algo_name=pl.col("algorithm_name"),
                 # TODO: Market Cap and Volume seem to be all zeros.
@@ -192,8 +240,17 @@ def _silver_stacked_coins() -> pl.DataFrame:
         ]
     )
 
+    coin_name_mapping = _create_coin_name_normalization_map(
+        df["reported_coin_name"].to_list()
+    )
+
     df = df.with_columns(
         algo_name=normalize_algorithm_names(pl.col("reported_algo_name")),
+        coin_name=(
+            pl.col("reported_coin_name").replace_strict(
+                coin_name_mapping, return_dtype=pl.String
+            )
+        ),
     )
 
     # Apply schema.
@@ -265,6 +322,7 @@ def _transform_coin_list_to_gold_algorithms(
             market_cap_usd=pl.col("market_cap_usd").sum(),
             volume_24h_usd=pl.col("volume_24h_usd").sum(),
             reported_aliases_from_coins=pl.col("reported_algo_name").unique().sort(),
+            coin_names=pl.col("coin_name").unique().sort(),
         )
     )
 
@@ -279,7 +337,12 @@ def _transform_coin_list_to_gold_algorithms(
             .map_elements(lambda x: orjson.dumps(x.to_list()), pl.Binary)
             .cast(pl.String)
         ),
-    ).drop("source_sites", "source_tables")
+        coin_names_json=(
+            pl.col("coin_names")
+            .map_elements(lambda x: orjson.dumps(x.to_list()), pl.Binary)
+            .cast(pl.String)
+        ),
+    ).drop("source_sites", "source_tables", "coin_names")
 
     logger.info(f"Transformed coin list to algorithm list with {df.height:,} entries.")
     return df
