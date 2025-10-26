@@ -258,6 +258,7 @@ def main() -> None:
     df = load_coin_list_df()
 
     df = pl_df_all_common_str_cleaning(df)
+    df = df.with_columns(pl.selectors.string().replace({"None": None}))
 
     # Add missing columns. Mostly a hack.
     for col, dtype in DySchemaCryptoslateCoins.polars_schema().items():
