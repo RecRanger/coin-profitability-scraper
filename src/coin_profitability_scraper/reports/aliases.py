@@ -11,6 +11,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "CryptoNight-Lite": ["Cryptonight Lite", "CryptoNight-lite", "CryptoNight Lite"],
     "CryptoNight-V7": ["Cryptonight V7", "CryptoNight V7", "CryptoNightV7"],
     "CuckooCycle": ["Cuckoo Cycle"],
+    "Cuckaroo29s": ["Cuckaroo29S"],
     "Equihash(125,4)": ["Equihash 125,4"],
     "Equihash(144,5)": ["Equihash 144,5", "Equihash1445", "Equihash 144_5"],
     "Equihash(150,5)": ["Equihash 150,5"],
