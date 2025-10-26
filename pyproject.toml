@@ -39,6 +39,7 @@ ignore = [
     "TD",
     "FIX",
     "S101", # Assert
+    "FBT003",
 ]
 
 [tool.ruff.lint.per-file-ignores]

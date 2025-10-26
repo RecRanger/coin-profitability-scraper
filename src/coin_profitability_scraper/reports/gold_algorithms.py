@@ -9,7 +9,7 @@ from loguru import logger
 
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL
-from coin_profitability_scraper.reports.aliases import ALGORITHM_MAPPINGS
+from coin_profitability_scraper.reports.aliases import normalize_algorithm_names
 
 output_folder = Path("./out/reports/") / Path(__file__).stem
 
@@ -193,7 +193,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
     )
 
     df = df.with_columns(
-        algo_name=pl.col("reported_algo_name").replace(ALGORITHM_MAPPINGS)
+        algo_name=normalize_algorithm_names(pl.col("reported_algo_name")),
     )
 
     # Apply schema.
@@ -231,7 +231,7 @@ def _get_stacked_asics_list() -> pl.DataFrame:
     )
 
     df = df.with_columns(
-        algo_name=pl.col("reported_algo_name").replace(ALGORITHM_MAPPINGS)
+        algo_name=normalize_algorithm_names(pl.col("reported_algo_name")),
     )
 
     logger.info(f"Stacked asic list with {df.height:,} entries.")
