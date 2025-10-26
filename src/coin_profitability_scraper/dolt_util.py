@@ -1,5 +1,7 @@
 """Utilities for managing the Dolt database connection."""
 
+import math
+
 import polars as pl
 import sqlalchemy
 import sqlalchemy.dialects.mysql
@@ -60,7 +62,8 @@ def upsert_polars_rows(
     del df  # Ensure we always use `df_update` now.
     logger.info(
         f'Upsert to "{table_name}". '
-        f"Changing/adding {df_update.height:,}/{df_current.height:,} rows. "
+        f"{df_current.height:,} rows currently. "
+        f"Updating and adding {df_update.height:,} rows. "
         f"Skipping {df_current.height - df_update.height:,} unchanged rows."
     )
 
@@ -92,6 +95,6 @@ def upsert_polars_rows(
             df_update.iter_slices(batch_size),
             desc=f'Upserting {df_update.height} rows to "{table_name}"',
             unit="batch",
-            total=(df_update.height // batch_size + 1),
+            total=math.floor(df_update.height / batch_size),
         ):
             conn.execute(stmt, df_chunk.to_dicts())
