@@ -8,6 +8,7 @@ import polars as pl
 import sqlalchemy
 from loguru import logger
 
+from coin_profitability_scraper import is_dry_run
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL, upsert_polars_rows
 from coin_profitability_scraper.tables import TableNameLiteral, table_to_path_and_schema
@@ -57,8 +58,9 @@ def _push_a_table(table_name: TableNameLiteral) -> None:
         logger.info("Done all upserts.")
 
         commit_message = f"Auto-updated table: {table_name}"
-        dolt.dolt_commit_and_push(commit_message=commit_message)
-        logger.info("Done commit and push.")
+        if is_dry_run() is False:
+            dolt.dolt_commit_and_push(commit_message=commit_message)
+            logger.info("Done commit and push.")
 
 
 def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
