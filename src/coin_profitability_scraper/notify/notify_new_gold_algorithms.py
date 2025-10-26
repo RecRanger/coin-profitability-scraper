@@ -12,6 +12,7 @@ import polars as pl
 import requests
 from loguru import logger
 
+from coin_profitability_scraper import is_dry_run
 from coin_profitability_scraper.dolt_updater import DoltDatabaseUpdater
 from coin_profitability_scraper.dolt_util import DOLT_REPO_URL
 
@@ -84,6 +85,10 @@ def notify_new_algorithms(df: pl.DataFrame) -> None:
 def send_ntfy_notification(message: str) -> None:
     """Send a notification via ntfy.sh."""
     logger.debug(f"Notification message ({len(message):,} bytes):\n{message}")
+    if is_dry_run():
+        logger.info("Dry run mode: not sending notification.")
+        return
+
     try:
         res = requests.post(
             NTFY_URL.format(topic_name=os.environ["NTFY_TOPIC_NAME"]),
