@@ -22,7 +22,9 @@ output_parquet_file = wheretomine_step1_output_path / "wheretomine_coins.parquet
 class DySchemaWheretomineCoins(dy.Schema):
     """Schema for `wheretomine_coins` table."""
 
-    coin_name = dy.String(nullable=False, min_length=1, max_length=100)
+    coin_name = dy.String(
+        primary_key=True, nullable=False, min_length=1, max_length=100
+    )
     coin_abbreviation = dy.String(nullable=False, min_length=1, max_length=20)
     coin_slug = dy.String(nullable=False, min_length=1, max_length=100)
     description = dy.String(nullable=True, min_length=10, max_length=5000)
