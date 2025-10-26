@@ -303,6 +303,38 @@ def _transform_asic_list_to_gold_algorithms(df_asic_list: pl.DataFrame) -> pl.Da
     return df
 
 
+def _warn_about_algo_mapping_opportunities(
+    gold_algorithms_df: dy.DataFrame[DySchemaGoldAlgorithms],
+) -> None:
+    """Warn about potential mapping opportunities (e.g., same name when lowercase).
+
+    Features:
+        1. Lowercases.
+        2. Removes all non-alphanumeric characters.
+    """
+    df = gold_algorithms_df.select(
+        algo_name_normalized=(
+            pl.col("algo_name").str.to_lowercase().str.replace_all(r"[^A-Za-z0-9]", "")
+        ),
+        algo_name_in_gold=pl.col("algo_name"),
+    )
+    df = df.group_by("algo_name_normalized").agg(
+        algo_names_in_gold=pl.col("algo_name_in_gold").unique().sort(),
+        count=pl.col("algo_name_in_gold").n_unique(),
+    )
+    df = df.filter(pl.col("count") > 1)
+    if df.height > 0:
+        logger.warning(
+            f"Found {df.height} potential algorithm name mapping opportunities "
+            "(add in aliases.py):"
+        )
+        for row in df.iter_rows(named=True):
+            logger.warning(
+                f"Potential algorithm name mapping opportunity for "
+                f"{row['algo_name_normalized']}: {row['algo_names_in_gold']}"
+            )
+
+
 def main() -> None:
     """Summarize all algorithms."""
     _fetch_dolt_tables()
@@ -353,6 +385,7 @@ def main() -> None:
     df_algorithms = df_algorithms.with_columns(pl.selectors.datetime().dt.date())
 
     df_algorithms = DySchemaGoldAlgorithms.validate(df_algorithms, cast=True)
+    _warn_about_algo_mapping_opportunities(df_algorithms)
 
     df_algorithms.write_parquet(output_folder / "gold_algorithms.parquet")
 

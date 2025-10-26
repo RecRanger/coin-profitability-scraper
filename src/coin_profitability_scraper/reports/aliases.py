@@ -3,8 +3,18 @@
 import polars as pl
 
 ALGORITHM_ALIASES: dict[str, list[str]] = {
+    "Blake256": ["Blake 256", "Blake256", "BLAKE256"],
     "Blake2B": ["Blake2b", "Blake (2b)"],
+    "Blake2B + SHA3": [
+        "Blake2b Sha3",
+        "Blake2b SHA3",
+        "Blake (2b) + SHA3",
+        "Blake2B SHA3",
+    ],
+    "Blake2S": ["Blake2s", "Blake (2s)"],
     "Blake2B-Sia": ["Blake2b-Sia", "Blake (2b)-Sia", "Blake (2b-Sia)"],
+    "BMW512": ["BMW 512", "BMW512", "BMW-512", "bmw512", "Bmw512"],
+    "CPUPower": ["CPU Power", "CPUpower"],
     "CryptoNight-Alloy": ["Cryptonight Alloy", "CryptoNight Alloy"],
     "CryptoNight-GPU": ["Cryptonight GPU", "CryptoNight GPU"],
     "CryptoNight-Heavy": ["Cryptonight Heavy", "CryptoNight Heavy"],
@@ -12,6 +22,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "CryptoNight-V7": ["Cryptonight V7", "CryptoNight V7", "CryptoNightV7"],
     "CuckooCycle": ["Cuckoo Cycle"],
     "Cuckaroo29s": ["Cuckaroo29S"],
+    "Equihash Scrypt": ["Equihash-Scrypt", "EquihashScrypt", "Equihash+Scrypt"],
     "Equihash(125,4)": ["Equihash 125,4"],
     "Equihash(144,5)": ["Equihash 144,5", "Equihash1445", "Equihash 144_5"],
     "Equihash(150,5)": ["Equihash 150,5"],
@@ -20,11 +31,14 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "Equihash(96,5)": ["Equihash 96,5", "Equihash 96_5"],
     "FiroPoW": ["Firo Pow", "FiroPoW", "FiroPow"],
     "Handshake": ["HandShake"],
+    "KarlsenHash": ["Karlsenhash"],
+    "KarlsenHashV2": ["Karlsenhashv2", "KarlsenHash v2"],
     "KawPow": ["Kaw Pow", "KawPow", "KAWPOW"],
     "Keccak": ["KECCAK"],  # Maybe include "KECCAK-256 (SHA-3)"
+    "Keccak-256 (SHA-3)": ["KECCAK-256 (SHA-3)"],  # May be the same as Keccak.
     "KHeavyHash": ["kHeavyHash"],
     "LPoS": ["LPos", "LPoS", "LPOS"],
-    "Lyra2 MintMe": ["Lyra2 MintMe", "Lyra2 MintMe version"],
+    "Lyra2-MintMe": ["Lyra2 MintMe", "Lyra2 MintMe version", "Lyra2-MintMe version"],
     "Lyra2Z": ["Lyra2z"],
     "M7M": ["m7m"],
     "Myriad-Groestl": ["Myr-Groestl", "Myriad Groestl"],
@@ -36,10 +50,12 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     # The datasources don't do a good enough job distinguishing any pure SHA256 coins.
     "SHA-256": ["SHA-256D", "SHA256", "SHA256D", "SHA 256"],
     "SHA256DT": ["SHA256dT", "SHA-256dT"],  # Note: Different than SHA-256D.
+    "Time Travel": ["Timetravel", "Time Travel", "TimeTravel"],
     "VerusHash": ["Verus hash", "VerusHash", "Verushash"],
     "XEVAN": ["Xevan"],
     "YesPower": ["YesPower", "Yespower", "YesPoWer"],
-    "yescrypt": ["Yescript", "YesCript", "yescript", "Yescrypt"],  # Fixes typos.
+    "Yescrypt": ["Yescript", "YesCript", "yescript", "Yescrypt"],  # Fixes typos.
+    "X11GOST": ["X11 Gost", "X11Gost"],
     "XelisHash-V2": ["Xelishashv2"],
 }
 
@@ -67,6 +83,9 @@ def pre_mapping_normalize_algorithm_names(expr: pl.Expr) -> pl.Expr:
 
     # Cuckatoo capitalization.
     expr = expr.str.replace_all(r"(?i)\b(cuckatoo)", "Cuckatoo")
+
+    expr = expr.str.replace_all(r"(?i)\b(SHA 2)", "SHA-2")
+    expr = expr.str.replace_all(r"(?i)\b(sha3)", "SHA3")
 
     return expr  # noqa: RET504
 
