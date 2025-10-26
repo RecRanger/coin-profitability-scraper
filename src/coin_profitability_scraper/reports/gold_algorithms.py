@@ -45,8 +45,8 @@ class DySchemaGoldAlgorithms(dy.Schema):
     algo_name = dy.String(
         primary_key=True, nullable=False, min_length=1, max_length=100
     )
-    source_sites_json = dy.String(nullable=False, min_length=1, max_length=100)
-    source_tables_json = dy.String(nullable=False, min_length=1, max_length=100)
+    source_sites_json = dy.String(nullable=False, min_length=2, max_length=1000)
+    source_tables_json = dy.String(nullable=False, min_length=2, max_length=1000)
     coin_count = dy.UInt32(nullable=False)
 
     earliest_coin_created_at = dy.Date(nullable=False)
@@ -171,6 +171,22 @@ def _silver_stacked_coins() -> pl.DataFrame:
                     "https://miningnow.com/coins/{}/", pl.col("coin_slug")
                 ),
                 founded_date=pl.col("founded_date"),
+                coin_created_at=pl.col("created_at"),
+            ),
+            pl.read_parquet(output_folder / "src_wheretomine_coins.parquet").select(
+                source_site=pl.lit("wheretomine"),
+                source_table=pl.lit("wheretomine_coins"),
+                coin_unique_source_id=pl.col("coin_name"),
+                coin_name=pl.col("coin_name"),
+                coin_symbol=pl.col("coin_abbreviation"),
+                reported_algo_name=pl.col("algorithm_name"),
+                # TODO: Market Cap and Volume seem to be all zeros.
+                market_cap_usd=pl.col("market_cap").cast(pl.Int64),
+                volume_24h_usd=pl.col("volume_24h").cast(pl.Int64),
+                coin_url=pl.format(
+                    "https://wheretomine.io/coins/{}/", pl.col("coin_slug")
+                ),
+                founded_date=pl.lit(None, pl.Date),
                 coin_created_at=pl.col("created_at"),
             ),
         ]
