@@ -10,7 +10,7 @@ from dataframely.exc import RuleValidationError
 from loguru import logger
 
 from coin_profitability_scraper.data_util import pl_df_all_common_str_cleaning
-from coin_profitability_scraper.whattomine.step_1_coins_api_fetch import (
+from coin_profitability_scraper.whattomine.step_1_api_fetch import (
     coins_api_data_json_path,
 )
 
