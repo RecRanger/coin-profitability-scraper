@@ -1,14 +1,21 @@
 """Run the whole reports pipeline."""
 
 from coin_profitability_scraper import step_9_dolt_write
-from coin_profitability_scraper.reports import gold_algorithms
+from coin_profitability_scraper.reports import (
+    gold_algorithms,
+    silver_stacked_coins,
+    silver_stacked_miners,
+)
 
 
 def main_reports_pipeline() -> None:
     """Run the whole reports pipeline."""
-    gold_algorithms.main()
+    silver_stacked_coins.main()
+    silver_stacked_miners.main()
+    step_9_dolt_write.main(("silver_stacked_coins", "silver_stacked_miners"))
 
-    step_9_dolt_write.main(("silver_stacked_coins", "gold_algorithms"))
+    gold_algorithms.main()
+    step_9_dolt_write.main(("gold_algorithms",))
 
 
 if __name__ == "__main__":
