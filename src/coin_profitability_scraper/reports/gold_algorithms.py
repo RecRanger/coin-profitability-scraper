@@ -143,11 +143,11 @@ def _transform_stacked_miners_to_gold_algorithms(
         )
         .group_by(["algo_name"], maintain_order=True)
         .agg(
-            asic_count=pl.col("asic_name").n_unique(),
+            asic_count=pl.col("miner_name").n_unique(),
             earliest_asic_announcement_date=pl.col("announcement_date").min(),
             earliest_asic_launch_date=pl.col("launch_date").min(),
-            earliest_asic_created_at=pl.col("asic_created_at").min(),
-            latest_asic_created_at=pl.col("asic_created_at").max(),
+            earliest_asic_created_at=pl.col("miner_created_at").min(),
+            latest_asic_created_at=pl.col("miner_created_at").max(),
             reported_aliases_from_asics=pl.col("reported_algo_name").unique().sort(),
         )
     )
