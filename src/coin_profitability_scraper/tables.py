@@ -30,6 +30,9 @@ from coin_profitability_scraper.notify import (
     notify_new_gold_algorithms as notify_new_gold_algorithms_module,
 )
 from coin_profitability_scraper.reports import gold_algorithms as gold_algorithms_module
+from coin_profitability_scraper.whattomine import (
+    step_2_ingest_coins_api as whattomine_coins_module,
+)
 from coin_profitability_scraper.wheretomine import (
     step_1_scrape_coins_page as wheretomine_coins_module,
 )
@@ -42,6 +45,7 @@ TableNameLiteral = Literal[
     "miningnow_asics",
     "crypto51_coins",
     "cryptodelver_coins",
+    "whattomine_coins",
     "wheretomine_coins",
     "silver_stacked_coins",
     "gold_algorithms",
@@ -76,6 +80,10 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
     "cryptodelver_coins": (
         cryptodelver_coins_module.output_parquet_path,
         cryptodelver_coins_module.DySchemaCryptodelverCoins,
+    ),
+    "whattomine_coins": (
+        whattomine_coins_module.output_parquet_file,
+        whattomine_coins_module.DySchemaWhattomineCoins,
     ),
     "wheretomine_coins": (
         wheretomine_coins_module.output_parquet_file,

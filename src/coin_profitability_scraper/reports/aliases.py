@@ -41,6 +41,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "Lyra2-MintMe": ["Lyra2 MintMe", "Lyra2 MintMe version", "Lyra2-MintMe version"],
     "Lyra2Z": ["Lyra2z"],
     "M7M": ["m7m"],
+    "Mega-BTX": ["MegaBTX", "Mega BTX"],
     "Myriad-Groestl": ["Myr-Groestl", "Myriad Groestl"],
     "NexaPoW": ["Nexa Pow", "NexaPow", "NEXAPOW", "NexaPow", "NexaHash", "Nexahash"],
     "PoD": ["POD"],

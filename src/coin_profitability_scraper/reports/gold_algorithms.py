@@ -221,6 +221,25 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 founded_date=pl.col("founded_date"),
                 coin_created_at=pl.col("created_at"),
             ),
+            pl.read_parquet(output_folder / "src_whattomine_coins.parquet").select(
+                source_site=pl.lit("whattomine"),
+                source_table=pl.lit("whattomine_coins"),
+                coin_unique_source_id=pl.concat_str(
+                    pl.col("whattomine_id").cast(pl.UInt32).cast(pl.String),
+                    pl.col("coin_name"),
+                    separator="-",
+                ),
+                reported_coin_name=pl.col("coin_name"),
+                coin_symbol=pl.col("tag"),
+                reported_algo_name=pl.col("algorithm"),
+                market_cap_usd=pl.col("market_cap_usd").round().cast(pl.Int64),
+                volume_24h_usd=pl.lit(None, pl.Int64),
+                coin_url=pl.format(
+                    "https://wheretomine.io/coins/{}", pl.col("whattomine_id")
+                ),
+                founded_date=pl.lit(None, pl.Date),
+                coin_created_at=pl.col("created_at"),
+            ),
             pl.read_parquet(output_folder / "src_wheretomine_coins.parquet").select(
                 source_site=pl.lit("wheretomine"),
                 source_table=pl.lit("wheretomine_coins"),
