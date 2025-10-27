@@ -11,6 +11,7 @@ ETL pipelines in this repo update the Dolt repository at: https://www.dolthub.co
 * https://www.crypto51.app
 * Cryptodelver
 * MiningNow
+* https://whattomine.com (via API)
 * https://wheretomine.io
 
 ## Future Data Sources

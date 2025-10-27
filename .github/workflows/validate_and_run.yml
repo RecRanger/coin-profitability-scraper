@@ -239,6 +239,7 @@ jobs:
       - run-crypto51-update
       - run-cryptoslate-update
       - run-miningnow-update
+      - run-whattomine-update
       - run-wheretomine-update
     # Hack: Allow this job to run even if other jobs fail, but still wait for them.
     if: ${{ always() }}

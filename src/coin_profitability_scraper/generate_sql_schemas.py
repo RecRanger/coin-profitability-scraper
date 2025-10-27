@@ -55,6 +55,10 @@ def main() -> None:
                 compile_kwargs={"literal_binds": True}
             )
         ).replace("\t", " " * 4)
+
+        if "PRIMARY KEY" not in create_stmt:
+            logger.warning(f"Table {table_name} has no PRIMARY KEY defined.")
+
         (schema_output_folder / f"{table_name}.sql").write_text(create_stmt)
 
     logger.success("Done.")

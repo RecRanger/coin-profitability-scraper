@@ -30,6 +30,12 @@ from coin_profitability_scraper.notify import (
     notify_new_gold_algorithms as notify_new_gold_algorithms_module,
 )
 from coin_profitability_scraper.reports import gold_algorithms as gold_algorithms_module
+from coin_profitability_scraper.reports import (
+    silver_stacked_coins as silver_stacked_coins_module,
+)
+from coin_profitability_scraper.reports import (
+    silver_stacked_miners as silver_stacked_miners_module,
+)
 from coin_profitability_scraper.whattomine import (
     step_2_ingest_coins_api as whattomine_coins_module,
 )
@@ -52,6 +58,7 @@ TableNameLiteral = Literal[
     "whattomine_miners",
     "wheretomine_coins",
     "silver_stacked_coins",
+    "silver_stacked_miners",
     "gold_algorithms",
     "notify_log_new_algorithms",
 ]
@@ -98,8 +105,12 @@ table_to_path_and_schema: dict[TableNameLiteral, tuple[Path, type[dy.Schema]]] =
         wheretomine_coins_module.DySchemaWheretomineCoins,
     ),
     "silver_stacked_coins": (
-        gold_algorithms_module.output_folder / "silver_stacked_coins.parquet",
-        gold_algorithms_module.DySchemaSilverStackedCoins,
+        silver_stacked_coins_module.output_folder / "silver_stacked_coins.parquet",
+        silver_stacked_coins_module.DySchemaSilverStackedCoins,
+    ),
+    "silver_stacked_miners": (
+        silver_stacked_miners_module.output_folder / "silver_stacked_miners.parquet",
+        silver_stacked_miners_module.DySchemaSilverStackedMiners,
     ),
     "gold_algorithms": (
         gold_algorithms_module.output_folder / "gold_algorithms.parquet",
