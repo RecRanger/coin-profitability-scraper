@@ -14,7 +14,7 @@ def main_whattomine_pipeline() -> None:
     step_2_ingest_coins_api.main()
     step_3_ingest_miners_apis.main()
 
-    step_9_dolt_write.main(("whattomine_coins",))
+    step_9_dolt_write.main(("whattomine_coins", "whattomine_miners"))
 
 
 if __name__ == "__main__":
