@@ -35,7 +35,7 @@ def upsert_polars_rows(
 
     """
     # Filter the dataframe to updates only.
-    # TODO: There may be a more efficent way relying on database features.
+    # TODO: There may be a more efficient way relying on database features.
     df_current = pl.read_database(
         query=f"SELECT * FROM {table_name}",  # noqa: S608
         connection=engine,
