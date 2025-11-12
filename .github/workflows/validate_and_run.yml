@@ -277,7 +277,7 @@ jobs:
       - run-reports-pipeline-update
 
     # Only run if validation and reports pipeline succeeded. Don't care about the other dependent per-source jobs here.
-    if: ${{ needs.validate-job.result == 'success' && needs.run-reports-pipeline-update.result == 'success' }}
+    if: ${{ always() && needs.validate-job.result == 'success' && needs.run-reports-pipeline-update.result == 'success' }}
 
     timeout-minutes: 20
 

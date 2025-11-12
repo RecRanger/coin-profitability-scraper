@@ -76,6 +76,7 @@ def main() -> None:
     logger.info(f"Downloaded {len(data):,} bytes of coin data from Minerstat API.")
     assert len(data) > 1_000  # noqa: PLR2004
 
+    # Main data output used in subsequent steps: "minerstat_coins.json".
     (step_1b_output_folder / "minerstat_coins.json").write_bytes(data)
     logger.info("Wrote raw Minerstat coin data to JSON file.")
 
@@ -85,7 +86,7 @@ def main() -> None:
     )
     logger.info(f"Parsed {len(data_list)} coins from Minerstat API.")
 
-    df_coins = pl.DataFrame(data_list)
+    df_coins = pl.DataFrame(data_list, infer_schema_length=None)
 
     df_algos = summarize_by_algo(df_coins)
 
