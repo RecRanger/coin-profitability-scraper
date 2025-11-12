@@ -55,6 +55,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "VerusHash": ["Verus hash", "VerusHash", "Verushash"],
     "XEVAN": ["Xevan"],
     "YesPower": ["YesPower", "Yespower", "YesPoWer"],
+    "YesPowerR16": ["YesPoWerR16"],
     "Yescrypt": ["Yescript", "YesCript", "yescript", "Yescrypt"],  # Fixes typos.
     "X11GOST": ["X11 Gost", "X11Gost"],
     "XelisHash-V2": ["Xelishashv2"],
