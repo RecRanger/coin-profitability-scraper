@@ -25,7 +25,7 @@ def main() -> None:
         (step_1b_output_folder / "minerstat_coins.json").read_bytes()
     )
     logger.info(f"Loaded {len(coins_list)} coins from Minerstat.")
-    df_coins = pl.DataFrame(coins_list)
+    df_coins = pl.DataFrame(coins_list, infer_schema_length=None)
     df_coins = df_coins.with_columns(
         coin_slug=pl.col("coin").str.replace_all(" ", "-", literal=True),
     ).with_columns(
