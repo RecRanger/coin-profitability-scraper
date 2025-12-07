@@ -107,8 +107,10 @@ def main() -> None:
                         f"{coins_per_second:.2f} coins per second."
                     )
 
-                if b"name-logo" not in page_content:
+                if b"coin-heading" not in page_content:
                     # Validate that this is a coin page with all the normal elements.
+                    # Filters out pages like "https://cryptoslate.com/coins/ampleforth/",
+                    # which is an amp page for /coins/.
                     logger.warning(
                         f'URL "{coin_url}" does not appear to be a coin page.'
                     )
