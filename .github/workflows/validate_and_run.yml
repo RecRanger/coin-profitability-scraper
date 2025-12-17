@@ -64,6 +64,8 @@ jobs:
       - name: Run Minerstat data pipeline
         run: |
           uv run src/coin_profitability_scraper/minerstat/minerstat_pipeline.py
+        env:
+          MINERSTAT_API_KEY: ${{ secrets.MINERSTAT_API_KEY }}
 
   run-cryptoslate-update:
     runs-on: ubuntu-latest

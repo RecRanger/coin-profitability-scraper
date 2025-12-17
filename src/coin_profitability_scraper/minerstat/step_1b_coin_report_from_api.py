@@ -1,6 +1,7 @@
 """Step 1b."""
 
 import json
+import os
 from pathlib import Path
 
 import orjson
@@ -74,7 +75,9 @@ def main() -> None:
 
     step_1b_output_folder.mkdir(parents=True, exist_ok=True)
 
-    data = download_as_bytes("https://api.minerstat.com/v2/coins")
+    api_key = os.environ["MINERSTAT_API_KEY"]
+    assert api_key
+    data = download_as_bytes(f"https://api.minerstat.com/v2/coins?key={api_key}")
     logger.info(f"Downloaded {len(data):,} bytes of coin data from Minerstat API.")
     assert len(data) > 1_000  # noqa: PLR2004
 
@@ -82,13 +85,31 @@ def main() -> None:
     (step_1b_output_folder / "minerstat_coins.json").write_bytes(data)
     logger.info("Wrote raw Minerstat coin data to JSON file.")
 
-    data_list = orjson.loads(data)
+    data_list = orjson.loads(data)["data"]
     (step_1b_output_folder / "minerstat_coins.pretty.json").write_bytes(
         orjson.dumps(orjson.loads(data), option=orjson.OPT_INDENT_2)
     )
     logger.info(f"Parsed {len(data_list)} coins from Minerstat API.")
+    # FIXME: Only loads the first 10 coins now because of the free API limit.
 
-    df_coins = pl.DataFrame(data_list, infer_schema_length=None)
+    df_coins = pl.DataFrame(
+        data_list,
+        schema={
+            "id": pl.String,
+            "coin": pl.String,
+            "name": pl.String,
+            "type": pl.String,
+            "algorithm": pl.String,
+            "network_hashrate": pl.Float64,
+            "difficulty": pl.Int64,
+            "reward": pl.Float64,
+            "reward_unit": pl.String,
+            "reward_block": pl.Int64,
+            "price": pl.Float64,
+            "volume": pl.Float64,
+            "updated": pl.Int64,
+        },
+    )
 
     df_algos = summarize_by_algo(df_coins)
 
