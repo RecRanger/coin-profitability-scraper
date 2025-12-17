@@ -82,13 +82,18 @@ def _get_silver_stacked_miners() -> pl.DataFrame:
                         pl.col("hash_rate")
                         * pl.col("hash_rate_type_title").replace_strict(
                             {
+                                "H/s": 1,
                                 "kH/s": 1e3,
                                 "MH/s": 1e6,
                                 "GH/s": 1e9,
                                 "TH/s": 1e12,
+                                "PH/s": 1e15,
+                                "Sol/s": 1,
                                 "kSol/s": 1e3,
                                 "MSol/s": 1e6,
                                 "GSol/s": 1e9,
+                                "TSol/s": 1e12,
+                                "PSol/s": 1e15,
                             },
                             return_dtype=pl.Float64,
                         )
