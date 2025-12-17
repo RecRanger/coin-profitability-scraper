@@ -210,7 +210,7 @@ def _get_earliest_logo_date_from_soup(
     https://cryptoslate.com/wp-content/uploads/2023/05/ArbDoge-AI-logo.jpg
     """
     # First, only look within: <div class='name-logo'>
-    logo_div = soup.find("div", class_="name-logo")
+    logo_div = soup.find("div", class_=("name-logo", "logo-container"))
     if not logo_div:
         logger.warning(f'No "name-logo" div found for coin_slug="{coin_slug}"')
         return None
