@@ -38,7 +38,7 @@ class DySchemaMinerstatCoins(dy.Schema):
     volume_usd = dy.UInt64(nullable=True)
 
     @dy.rule()
-    def _volume_usd_parsed_correctly() -> pl.Expr:
+    def _volume_usd_parsed_correctly(cls) -> pl.Expr:
         """`reported_volume` must be null or non-null the same as `volume_usd`."""
         return (
             pl.col("reported_volume")

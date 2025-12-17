@@ -15,7 +15,7 @@ dependencies = [
     "requests>=2.32.5",
     "sqlalchemy>=2.0.44",
     "tqdm>=4.67.1",
-    "dataframely>=1.7.0",
+    "dataframely>=2.3.1",
     "arrow>=1.4.0",
 ]
 
@@ -40,6 +40,7 @@ ignore = [
     "FIX",
     "S101", # Assert
     "FBT003",
+    "N805", # First argument of a method should be named 'self'. Off for classmethods in Dataframely.
 ]
 
 [tool.ruff.lint.per-file-ignores]

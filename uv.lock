@@ -118,7 +118,7 @@ requires-dist = [
     { name = "arrow", specifier = ">=1.4.0" },
     { name = "backoff", specifier = ">=2.2.1" },
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
-    { name = "dataframely", specifier = ">=1.7.0" },
+    { name = "dataframely", specifier = ">=2.3.1" },
     { name = "fake-useragent", specifier = ">=2.2.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "orjson", specifier = ">=3.11.3" },
@@ -147,18 +147,20 @@ wheels = [
 
 [[package]]
 name = "dataframely"
-version = "1.14.0"
+version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "fsspec" },
     { name = "numpy" },
     { name = "polars" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f1/2e/90ab7650f822e43838f31b79201e104991593678f6ca89eae36c2fb2c34f/dataframely-1.14.0.tar.gz", hash = "sha256:3135c4475a3906a4d62d845d20da7afafef0bdec268c322d1f54473bb852e087", size = 305914, upload-time = "2025-10-09T10:03:12.418Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/73/2066358030c8d0ecc2789b0c347abffec9179760a1c3cbf5a865a89eb983/dataframely-2.3.1.tar.gz", hash = "sha256:70b937d9d6fa30b0c60318509a1c67ce22142a9f54617825da66ad7a3330127d", size = 378670, upload-time = "2025-12-10T17:48:25.238Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/c5/a703f9b2b4e398b8f831308159824543675ec2cdefb5795e36a91f9439d6/dataframely-1.14.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:d3d16cbfdcd05d497e904794d082aad9d83bd443573cfe20621104195e62b13b", size = 508363, upload-time = "2025-10-09T10:03:03.985Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/37/de92bbbe5e94f6db9f96ed326e0d904f7fb3cd938ddbe6c1da08c4e49230/dataframely-1.14.0-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:38a59df983e26531ba6303101570c3589f9f28158705a6098df270c390aa10a9", size = 554122, upload-time = "2025-10-09T10:03:06.195Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/99/a0304789af90d9c9c84a221df8e6dd12759c11832ba20ad9445436d740f9/dataframely-1.14.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:95a6b53f40e74764811c93efa9af98a66b05fd85e5a12d609acb5ae0715e8dee", size = 553018, upload-time = "2025-10-09T10:03:07.938Z" },
-    { url = "https://files.pythonhosted.org/packages/31/64/061f4220892fe18b4b53840e85869eae015306c4cc8d4077a276a564d326/dataframely-1.14.0-cp310-abi3-win_amd64.whl", hash = "sha256:de4de51c954b9efcfd33e5d4725b12e750c394ab5c9577c6d20be6b01a8fbd76", size = 429823, upload-time = "2025-10-09T10:03:09.32Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/b7/9034788ccc16cfef1c13bcedca7bb80b45a93a7eee02f13ac7e34dbc58c9/dataframely-2.3.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c4685865392bbe5c7dafbf06394f9779d25690d37fa4f87cc0196019504101dd", size = 5155118, upload-time = "2025-12-10T17:48:17.012Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/14/0b58c86fe685c3c3c461cb2bf8934d1db37b40ca4789c83cdf9e1520b1e1/dataframely-2.3.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:c65ba3c6bf4e30586fc85256618921162712b2fcb80bfd8304f5a99c384389fe", size = 4800502, upload-time = "2025-12-10T17:48:18.648Z" },
+    { url = "https://files.pythonhosted.org/packages/73/f2/235f1ac9fa998e6e08b500d50f24c35719bb3e8d40f288b3934a05770ef5/dataframely-2.3.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4e26e20d0f8d9e70fbc5926e6c1398951eb6dc74e345832f132fe1ca3e972500", size = 5031460, upload-time = "2025-12-10T17:48:20.626Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/9b/926612ac0cb46d2b1f606c69485e514afabbb44a902828c25777978e768f/dataframely-2.3.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:faa92e74c4afde4509ed10dd6bedd5e98a38ac835123e9fc8d7f0b4c76e0c059", size = 5332398, upload-time = "2025-12-10T17:48:22.395Z" },
+    { url = "https://files.pythonhosted.org/packages/78/57/4d2baa2f3b0d28d0cb2515ad1d94103d5cebed5e62dd5eff7f329b17d39e/dataframely-2.3.1-cp310-abi3-win_amd64.whl", hash = "sha256:415e2148645ed44fcd2a920a71275d77283f7efb3f19a1f4cce66537c8d9cae3", size = 5348497, upload-time = "2025-12-10T17:48:23.84Z" },
 ]
 
 [[package]]
@@ -168,6 +170,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/41/43/948d10bf42735709edb5ae51e23297d034086f17fc7279fef385a7acb473/fake_useragent-2.2.0.tar.gz", hash = "sha256:4e6ab6571e40cc086d788523cf9e018f618d07f9050f822ff409a4dfe17c16b2", size = 158898, upload-time = "2025-04-14T15:32:19.238Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/51/37/b3ea9cd5558ff4cb51957caca2193981c6b0ff30bd0d2630ac62505d99d0/fake_useragent-2.2.0-py3-none-any.whl", hash = "sha256:67f35ca4d847b0d298187443aaf020413746e56acd985a611908c73dba2daa24", size = 161695, upload-time = "2025-04-14T15:32:17.732Z" },
+]
+
+[[package]]
+name = "fsspec"
+version = "2025.12.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/27/954057b0d1f53f086f681755207dda6de6c660ce133c829158e8e8fe7895/fsspec-2025.12.0.tar.gz", hash = "sha256:c505de011584597b1060ff778bb664c1bc022e87921b0e4f10cc9c44f9635973", size = 309748, upload-time = "2025-12-03T15:23:42.687Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/c7/b64cae5dba3a1b138d7123ec36bb5ccd39d39939f18454407e5468f4763f/fsspec-2025.12.0-py3-none-any.whl", hash = "sha256:8bf1fe301b7d8acfa6e8571e3b1c3d158f909666642431cc78a1b7b4dbc5ec5b", size = 201422, upload-time = "2025-12-03T15:23:41.434Z" },
 ]
 
 [[package]]

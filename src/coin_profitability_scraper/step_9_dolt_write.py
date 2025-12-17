@@ -42,10 +42,10 @@ def _push_a_table(table_name: TableNameLiteral) -> None:
 
         # For certain datasets, also DELETE rows no longer in the upsert content.
         if table_name in {"gold_algorithms"}:
-            assert len(dy_schema.primary_keys()) == 1, (
+            assert len(dy_schema.primary_key()) == 1, (
                 "Composite primary keys not supported."
             )
-            primary_key_column = dy_schema.primary_keys()[0]
+            primary_key_column = dy_schema.primary_key()[0]
             with dolt.engine.begin() as conn:
                 result = conn.execute(
                     sqlalchemy.text(

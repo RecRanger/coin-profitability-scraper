@@ -45,12 +45,12 @@ class DySchemaCryptodelverCoins(dy.Schema):
     algo_url = dy.String(nullable=True, min_length=20, max_length=500)
 
     @dy.rule()
-    def _volume_usd_parsed_correctly() -> pl.Expr:
+    def _volume_usd_parsed_correctly(cls) -> pl.Expr:
         """`reported_volume` must be null/non-null the same as `volume_usd`."""
         return pl.col("reported_volume").is_null() == pl.col("volume_usd").is_null()
 
     @dy.rule()
-    def _market_cap_usd_parsed_correctly() -> pl.Expr:
+    def _market_cap_usd_parsed_correctly(cls) -> pl.Expr:
         """`reported_market_cap` must be null/non-null the same as `market_cap_usd`."""
         return (
             pl.col("reported_market_cap").is_null()
@@ -58,12 +58,12 @@ class DySchemaCryptodelverCoins(dy.Schema):
         )
 
     @dy.rule()
-    def _algo_name_and_slug_present_together() -> pl.Expr:
+    def _algo_name_and_slug_present_together(cls) -> pl.Expr:
         """`algo_name` and `algo_slug` must both be null or both be non-null."""
         return pl.col("algo_name").is_null() == pl.col("algo_slug").is_null()
 
     @dy.rule()
-    def _algo_name_and_url_present_together() -> pl.Expr:
+    def _algo_name_and_url_present_together(cls) -> pl.Expr:
         """`algo_name` and `algo_url` must both be null or both be non-null."""
         return pl.col("algo_name").is_null() == pl.col("algo_url").is_null()
 

@@ -24,7 +24,7 @@ class DySchemaMiningnowAlgorithms(dy.Schema):
     algorithm_slug = dy.String(nullable=False, min_length=1, max_length=100)
 
     @dy.rule(group_by=["algorithm_slug"])
-    def _algorithm_slug_unique() -> pl.Expr:
+    def _algorithm_slug_unique(cls) -> pl.Expr:
         """Ensure algorithm_slug is unique."""
         return pl.len() == 1
 

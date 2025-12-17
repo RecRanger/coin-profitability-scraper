@@ -18,7 +18,7 @@ def main() -> None:
 
     for table_name, (_path, schema_class) in table_to_path_and_schema.items():
         logger.info(f"Generating SQL schema for {table_name}")
-        sqlalchemy_columns: list[Any] = schema_class.sql_schema(  # pyright: ignore[reportUnknownVariableType,reportUnknownMemberType]
+        sqlalchemy_columns: list[Any] = schema_class.to_sqlalchemy_columns(  # pyright: ignore[reportUnknownVariableType,reportUnknownMemberType]
             dialect=sqlalchemy.dialects.mysql.base.MySQLDialect()
         )
 

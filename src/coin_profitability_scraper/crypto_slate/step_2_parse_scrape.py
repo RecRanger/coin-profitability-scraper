@@ -318,7 +318,7 @@ def main() -> None:
     df = df.with_columns(pl.selectors.string().replace({"None": None}))
 
     # Add missing columns. Mostly a hack.
-    for col, dtype in DySchemaCryptoslateCoins.polars_schema().items():
+    for col, dtype in DySchemaCryptoslateCoins.to_polars_schema().items():
         if col not in df.columns:
             df = df.with_columns(pl.lit(None, dtype=dtype).alias(col))
 

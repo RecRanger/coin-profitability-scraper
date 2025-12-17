@@ -6,7 +6,7 @@ from typing import Any
 import dataframely as dy
 import orjson
 import polars as pl
-from dataframely.exc import RuleValidationError
+from dataframely.exc import ValidationError
 from loguru import logger
 
 from coin_profitability_scraper.data_util import pl_df_all_common_str_cleaning
@@ -111,7 +111,7 @@ def main() -> None:
 
     try:
         df = DySchemaWhattomineCoins.validate(df, cast=True)
-    except RuleValidationError:
+    except ValidationError:
         _, invalid_info = DySchemaWhattomineCoins.filter(df, cast=True)
         invalid_info.write_parquet(step_2_output_folder / "invalid_schema.pq")
         raise

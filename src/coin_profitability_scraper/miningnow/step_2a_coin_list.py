@@ -36,12 +36,12 @@ class DySchemaMiningnowCoins(dy.Schema):
     icon_dark_url = dy.String(nullable=True, min_length=25, max_length=1000)
 
     @dy.rule(group_by=["coin_name"])
-    def _coin_name_unique() -> pl.Expr:
+    def _coin_name_unique(cls) -> pl.Expr:
         """Ensure coin_name is unique."""
         return pl.len() == 1
 
     @dy.rule(group_by=["ticker"])
-    def _ticker_unique() -> pl.Expr:
+    def _ticker_unique(cls) -> pl.Expr:
         """Ensure ticker is unique."""
         return pl.len() == 1
 

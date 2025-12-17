@@ -49,7 +49,7 @@ class DySchemaGoldAlgorithms(dy.Schema):
     coin_names_json = dy.String(nullable=False, min_length=2, max_length=10_000)
 
     @dy.rule()
-    def reported_aliases_json_is_not_empty_list() -> pl.Expr:
+    def reported_aliases_json_is_not_empty_list(cls) -> pl.Expr:
         """Ensure reported_aliases_json is not an empty list."""
         return pl.col("reported_aliases_json").map_elements(
             lambda x: len(orjson.loads(x)) > 0, return_dtype=pl.Boolean
