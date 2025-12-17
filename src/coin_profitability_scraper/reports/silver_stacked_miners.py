@@ -62,6 +62,12 @@ def _fetch_dolt_tables() -> None:
 
 def _get_silver_stacked_miners() -> pl.DataFrame:
     """Stack all ASIC/GPU datasets into a normalized miner list."""
+    df_miningnow_asics = pl.read_parquet(output_folder / "src_miningnow_asics.parquet")
+    logger.debug(
+        f"Distinct hash_rate_type_title values: "
+        f"{df_miningnow_asics['hash_rate_type_title'].value_counts(sort=True)}"
+    )
+
     df = pl.concat(
         [
             pl.read_parquet(output_folder / "src_miningnow_asics.parquet")
