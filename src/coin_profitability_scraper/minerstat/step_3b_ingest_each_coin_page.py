@@ -96,6 +96,8 @@ def _ingest_coin_page(html_content: str, *, coin_slug: str) -> dict[str, Any]:
 
 def main() -> None:
     """Ingest each coin page from Minerstat."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     input_html_file_list = sorted(step_2b_output_folder_path.glob("*.html"))
     logger.info(f"Found {len(input_html_file_list)} HTML files to ingest.")
 

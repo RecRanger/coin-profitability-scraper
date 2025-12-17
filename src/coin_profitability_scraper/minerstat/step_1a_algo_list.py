@@ -97,6 +97,8 @@ def transform_add_extra_columns(df: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Fetch and process Minerstat algorithm data."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     step_1a_output_folder_path.mkdir(parents=True, exist_ok=True)
 
     html_content_path = step_1a_output_folder_path / "minerstat_algorithms.html"

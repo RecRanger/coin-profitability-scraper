@@ -2,6 +2,7 @@
 
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 import backoff
 import polars as pl
@@ -65,6 +66,8 @@ def _push_a_table(table_name: TableNameLiteral) -> None:
 
 def main(tables_to_update: Sequence[TableNameLiteral]) -> None:
     """Write data to DoltHub database."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     logger.info(f"Updating dolt tables: {', '.join(tables_to_update)}")
 
     for table_name in tables_to_update:

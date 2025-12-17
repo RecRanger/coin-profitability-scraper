@@ -16,6 +16,8 @@ step_2a_output_folder_path = Path("./out/minerstat/") / Path(__file__).stem
 
 def main() -> None:
     """Scrape each algorithm page from Minerstat."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     df = pl.read_parquet(step_1a_output_folder_path / "minerstat_algorithms.parquet")
     logger.info(f"Loaded {len(df)} algorithms from Minerstat.")
 

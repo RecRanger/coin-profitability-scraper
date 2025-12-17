@@ -21,6 +21,8 @@ def main() -> None:
     Main field(s) of interest:
         - Date founded.
     """
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     coins_list = orjson.loads(
         (step_1b_output_folder / "minerstat_coins.json").read_bytes()
     )

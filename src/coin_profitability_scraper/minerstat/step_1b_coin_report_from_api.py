@@ -70,6 +70,8 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Generate a report summarizing the parsed coin data."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     step_1b_output_folder.mkdir(parents=True, exist_ok=True)
 
     data = download_as_bytes("https://api.minerstat.com/v2/coins")

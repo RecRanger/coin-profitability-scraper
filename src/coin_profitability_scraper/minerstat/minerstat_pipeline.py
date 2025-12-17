@@ -1,5 +1,7 @@
 """Run the whole Minerstat pipeline."""
 
+from loguru import logger
+
 from coin_profitability_scraper import step_9_dolt_write
 from coin_profitability_scraper.minerstat import (
     step_1a_algo_list,
@@ -12,6 +14,7 @@ from coin_profitability_scraper.minerstat import (
 
 def main_minerstat_pipeline() -> None:
     """Run the whole Minerstat pipeline."""
+    logger.info("Starting Minerstat pipeline...")
     step_1a_algo_list.main()
     step_1b_coin_report_from_api.main()
     step_2a_scrape_each_algo_page.main()
