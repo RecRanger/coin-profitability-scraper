@@ -54,14 +54,70 @@ class DySchemaCryptoslateCoins(dy.Schema):
     earliest_year = dy.UInt16(nullable=True)
 
 
-def _extract_technical_key_value_from_soup(
+def extract_technical_key_value_from_soup_v1(
     soup: BeautifulSoup, *, coin_slug: str
 ) -> dict[str, str | None]:
     """Extract the hash algorithm from the HTML soup.
 
     Most importantly, returns the Hash Algorithm.
+
+    Deprecated.
     """
     technical_info_key_value_section = soup.find("div", class_="technical")
+    if technical_info_key_value_section is None:
+        msg = f"Could not find technical info section. Coin: {coin_slug}"
+        raise ValueError(msg)
+
+    out: dict[str, str | None] = {}
+    for li_element in technical_info_key_value_section.find_all("li"):
+        if "hidden" in li_element.attrs.get("class", []):
+            continue  # Skip hidden elements.
+
+        key_element = li_element.find("span", class_="info")
+        if key_element is None:
+            msg = (
+                f"Could not find key in technical info section. "
+                f"Coin: {coin_slug}, li: {li_element}"
+            )
+            raise ValueError(msg)
+
+        if a_tags := li_element.find_all("a"):
+            # Special case: if there are links, join their text with commas.
+            value_str = ", ".join(a.text.strip() for a in a_tags if a.text.strip())
+
+        else:
+            value_element = li_element.find("span", class_="value")
+
+            if value_element is None:
+                msg = (
+                    f"Could not find key and/or value in technical info section. "
+                    f"Coin: {coin_slug}, li: {li_element}"
+                )
+                raise ValueError(msg)
+
+            if key_element.text in out:
+                msg = (
+                    f"Repeated technical info key in coin {coin_slug}: "
+                    f"{key_element.text}"
+                )
+                raise ValueError(msg)
+
+            value_str = re.sub(r"\s+", " ", value_element.text.strip())
+
+        out[key_element.text] = value_str
+    return out
+
+
+def extract_technical_key_value_from_soup_v2(
+    soup: BeautifulSoup, *, coin_slug: str
+) -> dict[str, str | None]:
+    """Extract the hash algorithm from the HTML soup.
+
+    Most importantly, returns the Hash Algorithm.
+
+    Deprecated.
+    """
+    technical_info_key_value_section = soup.find("section", id="technical-details")
     if technical_info_key_value_section is None:
         msg = f"Could not find technical info section. Coin: {coin_slug}"
         raise ValueError(msg)
@@ -194,7 +250,7 @@ def _load_file_fetch_data(html_file_path: Path) -> dict[str, date | str | float 
     html_content = html_file_path.read_text()
     soup = BeautifulSoup(html_content, "html.parser")
 
-    technical_kv_data = _extract_technical_key_value_from_soup(
+    technical_kv_data = extract_technical_key_value_from_soup_v2(
         soup, coin_slug=html_file_path.stem
     )
     technical_kv_data_cols = {
@@ -252,7 +308,8 @@ def load_coin_list_df() -> pl.DataFrame:
 
 def main() -> None:
     """Parse HTML files and extract coin information."""
-    logger.info("Starting")
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     step_2_output_folder.mkdir(parents=True, exist_ok=True)
 
     df = load_coin_list_df()

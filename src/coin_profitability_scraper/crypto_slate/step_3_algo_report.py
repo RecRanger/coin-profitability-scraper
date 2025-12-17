@@ -70,6 +70,8 @@ def summarize_by_algo(df_coins: pl.DataFrame) -> pl.DataFrame:
 
 def main() -> None:
     """Generate a report summarizing the parsed coin data."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     df_coins = pl.read_parquet(step_2_output_folder / "cryptoslate_coins.parquet")
 
     df_algos = summarize_by_algo(df_coins)

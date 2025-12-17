@@ -42,6 +42,8 @@ def is_direct_coin_url(url: str) -> bool:
 
 def main() -> None:
     """Scrape coin pages."""
+    logger.info(f"Starting {Path(__file__).name} main()")
+
     # Create a folder to store downloaded pages.
     step_1_html_folder_path.mkdir(parents=True, exist_ok=True)
 
