@@ -197,7 +197,7 @@ def _silver_stacked_coins() -> pl.DataFrame:
                 market_cap_usd=pl.col("market_cap_usd").round().cast(pl.Int64),
                 volume_24h_usd=pl.lit(None, pl.Int64),
                 coin_url=pl.format(
-                    "https://wheretomine.io/coins/{}", pl.col("whattomine_id")
+                    "https://whattomine.com/coins/{}", pl.col("whattomine_id")
                 ),
                 founded_date=pl.lit(None, pl.Date),
                 coin_created_at=pl.col("created_at"),
