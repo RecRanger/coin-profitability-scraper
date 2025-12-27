@@ -59,6 +59,7 @@ ALGORITHM_ALIASES: dict[str, list[str]] = {
     "Yescrypt": ["Yescript", "YesCript", "yescript", "Yescrypt"],  # Fixes typos.
     "X11GOST": ["X11 Gost", "X11Gost"],
     "XelisHash-V2": ["Xelishashv2"],
+    "XelisHash-V3": ["Xelishashv3"],
 }
 
 ALGORITHM_MAPPINGS: dict[str, str] = {  # Keys: aliases, Values: standard names.
