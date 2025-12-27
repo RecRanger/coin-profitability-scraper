@@ -129,6 +129,8 @@ def main() -> None:
     step_3b_output_folder.mkdir(parents=True, exist_ok=True)
     df.write_parquet(step_3b_output_folder / "minerstat_coins.parquet")
 
+    logger.info(f"Finished {Path(__file__).name} main(). Final shape: {df.shape}")
+
 
 if __name__ == "__main__":
     main()
