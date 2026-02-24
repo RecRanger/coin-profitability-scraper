@@ -1,4 +1,12 @@
-"""Step 1b."""
+"""Step 1b.
+
+Use the API to list all coins.
+
+This now fails because Minerstat's free API tier doesn't allow fetching the full list of
+coins (only supports fetching 10 coins at a time).
+
+Currently disabled in the pipeline.
+"""
 
 import json
 import os
