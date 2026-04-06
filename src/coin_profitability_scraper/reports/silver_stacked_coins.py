@@ -26,8 +26,8 @@ class DySchemaSilverStackedCoins(dy.Schema):
     coin_unique_source_id = dy.String(
         primary_key=True, nullable=False, min_length=1, max_length=100
     )
-    coin_name = dy.String(nullable=False, min_length=1, max_length=100)
-    reported_coin_name = dy.String(nullable=False, min_length=1, max_length=100)
+    coin_name = dy.String(nullable=False, min_length=1, max_length=200)
+    reported_coin_name = dy.String(nullable=False, min_length=1, max_length=200)
     algo_name = dy.String(nullable=True, min_length=1, max_length=100)
     reported_algo_name = dy.String(nullable=True, min_length=1, max_length=100)
 
@@ -235,7 +235,23 @@ def _silver_stacked_coins() -> pl.DataFrame:
     )
 
     # Apply schema.
-    df = DySchemaSilverStackedCoins.validate(df, cast=True)
+    height_before = df.height
+    df, failure_info = DySchemaSilverStackedCoins.filter(df, cast=True)
+    failure_info.write_parquet(
+        output_folder / "silver_stacked_coins_schema_failures.parquet"
+    )
+    if df.height < height_before:
+        logger.warning(
+            f"{height_before - df.height} rows failed schema validation. "
+            f"See silver_stacked_coins_schema_failures.parquet for details."
+        )
+    if height_before - df.height > (height_before * 0.01):
+        msg = (
+            "More than 1% of rows failed schema validation. "
+            "Consider fixing the underlying issues. "
+            "See silver_stacked_coins_schema_failures.parquet for details."
+        )
+        raise ValueError(msg)
 
     logger.info(f"Stacked coin list with {df.height:,} entries.")
     return df
