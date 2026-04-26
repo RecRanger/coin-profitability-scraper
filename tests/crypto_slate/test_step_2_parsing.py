@@ -14,6 +14,8 @@ from coin_profitability_scraper.crypto_slate.step_2_parse_scrape import (
 def test__get_earliest_logo_date_from_soup_previous_format() -> None:
     """Test the _get_earliest_logo_date_from_soup function.
 
+    Deprecated 2026-04-26.
+
     Previous format.
     """
     html_content = """
@@ -41,6 +43,8 @@ def test__get_earliest_logo_date_from_soup_previous_format() -> None:
 
 def test__get_earliest_logo_date_from_soup_new_format() -> None:
     """Test the _get_earliest_logo_date_from_soup function with new format.
+
+    Deprecated 2026-04-26.
 
     Source: https://cryptoslate.com/coins/agoras-tokens/
     """
