@@ -209,10 +209,17 @@ def _get_earliest_logo_date_from_soup(
     Example logo URL:
     https://cryptoslate.com/wp-content/uploads/2023/05/ArbDoge-AI-logo.jpg
     """
-    # First, only look within: <div class='name-logo'>
-    logo_div = soup.find("div", class_=("name-logo", "logo-container"))
+    logo_div = soup.find(
+        "div",
+        class_=(
+            # Logical OR:
+            "name-logo",  # Old.
+            "logo-container",  # Old.
+            "coin-page-hero__logo",  # After 2026-04-26.
+        ),
+    )
     if not logo_div:
-        logger.warning(f'No "name-logo" div found for coin_slug="{coin_slug}"')
+        logger.warning(f'No logo div found for coin_slug="{coin_slug}"')
         return None
 
     # Now find all logo image URLs within that div.
