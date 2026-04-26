@@ -109,7 +109,10 @@ def main() -> None:
                         f"{coins_per_second:.2f} coins per second."
                     )
 
-                if b"coin-heading" not in page_content:
+                if not (
+                    (b"coin-heading" in page_content)
+                    or (b"coin-page-hero" in page_content)
+                ):
                     # Validate that this is a coin page with all the normal elements.
                     # Filters out pages like "https://cryptoslate.com/coins/ampleforth/",
                     # which is an amp page for /coins/.
