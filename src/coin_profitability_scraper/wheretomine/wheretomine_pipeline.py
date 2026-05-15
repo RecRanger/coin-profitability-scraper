@@ -1,4 +1,7 @@
-"""Run the whole wheretomine pipeline."""
+"""Run the whole wheretomine pipeline.
+
+Note: This pipeline is disabled because wheretomine.io shut down in 2026-05.
+"""
 
 from coin_profitability_scraper import step_9_dolt_write
 from coin_profitability_scraper.wheretomine import step_1_scrape_coins_page
